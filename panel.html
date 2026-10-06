@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>İdarə paneli</title>
+<style>
+:root{--bg:#14151a;--card:#1f212a;--ink:#f1ece2;--muted:#9a9a9f;--acc:#f2661f;--line:#30323d;color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.w{max-width:760px;margin:0 auto;padding:12px 14px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:10px 0;position:sticky;top:0;background:var(--bg);z-index:3}
+.tabs button{flex:none}
+button,select{font:inherit;padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button.on,button.p{background:var(--acc);border-color:var(--acc);color:#fff}
+button.d{color:#ff8a80}
+input:not([type=checkbox]):not([type=color]){font:inherit;padding:9px;border-radius:8px;border:1px solid var(--line);background:#14151a;color:var(--ink);width:100%}
+input[type=color]{width:56px;height:38px;border:0;background:none}
+.it{display:grid;grid-template-columns:2fr 3fr 90px auto auto;gap:6px;align-items:center;margin-top:8px}
+.muted,small{color:var(--muted)}
+.st{padding:2px 10px;border-radius:99px;font-size:13px;background:var(--line)}
+.st.new{background:var(--acc)}.st.done{background:#2e7d32}
+.bar{height:10px;border-radius:5px;background:var(--acc);min-width:2px}
+.f{display:grid;gap:8px;margin:8px 0}
+.qr{display:inline-block;text-align:center;padding:10px;margin:6px;background:#fff;color:#000;border-radius:10px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#2e7d32;padding:8px 18px;border-radius:99px;display:none}
+code{display:block;white-space:pre-wrap;word-break:break-all;background:#0c0d10;padding:10px;border-radius:8px;font-size:13px}
+@media (max-width:600px){.it{grid-template-columns:1fr 1fr}}
+@media print{.tabs,.noprint,header{display:none!important}body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="w" id="app"><p class="muted">Yüklənir...</p></div>
+<div id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const SB_URL='https://jvvgylzfkciiaoodcsgf.supabase.co',SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2dmd5bHpma2NpaWFvb2Rjc2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMDgxNDQsImV4cCI6MjEwNjc4NDE0NH0.9hmwX-K8kpl5Pofyhgm4DzQ6OhpiRe4fM1Bds0OShMg';
+const db=supabase.createClient(SB_URL,SB_KEY);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>(Math.round(n*100)/100).toFixed(2);
+const ST={new:'Yeni',preparing:'Hazırlanır',done:'Hazırdır',cancelled:'Ləğv edildi'};
+const S={tab:'orders',cats:[],items:[],orders:[],stats:null,rests:[],rest:null,p:null,nt:10};
+let timer;
+const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',1500)};
+
+async function boot(){
+  const {data:{session}}=await db.auth.getSession();
+  if(!session) return login();
+  const {data:p}=await db.from('profiles').select('*').eq('id',session.user.id).maybeSingle();
+  if(!p) return $('#app').innerHTML='<p>Hesabın hələ restorana bağlı deyil. Admindən xahiş et.</p><button data-act="out">Çıx</button>';
+  S.p=p;
+  if(p.role==='admin'){S.rests=(await db.from('restaurants').select('*').order('created_at')).data||[]}
+  await pick(p.role==='admin'?S.rests[0]?.id:p.restaurant_id);
+}
+async function pick(id){
+  if(!id){S.rest=null;S.tab='rests'}
+  else{S.rest=(await db.from('restaurants').select('*').eq('id',id).single()).data;if(S.tab==='rests'&&S.p.role!=='admin')S.tab='orders'}
+  await load();render();
+}
+function login(msg){
+  $('#app').innerHTML=`<h2>Giriş</h2><form class="f" id="lf"><input id="em" type="email" placeholder="E-poçt" autocomplete="username" required><input id="pw" type="password" placeholder="Şifrə" autocomplete="current-password" required><button class="p">Daxil ol</button><small>${esc(msg||'')}</small></form>`;
+  $('#lf').onsubmit=async e=>{e.preventDefault();const r=await db.auth.signInWithPassword({email:$('#em').value,password:$('#pw').value});r.error?login('E-poçt və ya şifrə səhvdir'):boot()};
+}
+
+async function load(){
+  clearInterval(timer);if(!S.rest)return;const id=S.rest.id;
+  if(S.tab==='orders'){await loadOrders();timer=setInterval(async()=>{await loadOrders();render()},10000)}
+  if(S.tab==='menu'){
+    const [c,i]=await Promise.all([db.from('categories').select('*').eq('restaurant_id',id).order('sort'),db.from('items').select('*').eq('restaurant_id',id).order('sort')]);
+    S.cats=c.data||[];S.items=i.data||[]}
+  if(S.tab==='stats'){
+    const since=new Date(Date.now()-14*864e5).toISOString();
+    const [e,o]=await Promise.all([db.from('events').select('type,created_at').eq('restaurant_id',id).gte('created_at',since).limit(5000),
+      db.from('order_items').select('name,qty,orders!inner(restaurant_id)').eq('orders.restaurant_id',id).limit(2000)]);
+    const days={};for(let k=13;k>=0;k--)days[new Date(Date.now()-k*864e5).toISOString().slice(0,10)]={scan:0,order:0};
+    (e.data||[]).forEach(x=>{const d=days[x.created_at.slice(0,10)];if(d&&d[x.type]!==undefined)d[x.type]++});
+    const top={};(o.data||[]).forEach(x=>top[x.name]=(top[x.name]||0)+x.qty);
+    S.stats={days,top:Object.entries(top).sort((a,b)=>b[1]-a[1]).slice(0,8)}}
+}
+async function loadOrders(){S.orders=(await db.from('orders').select('*,order_items(*)').eq('restaurant_id',S.rest.id).order('created_at',{ascending:false}).limit(30)).data||[]}
+
+const V={
+orders:()=>S.orders.length?S.orders.map(o=>`<div class="card"><div class="row"><b>Masa ${esc(o.table_label||'-')}</b><span class="st ${o.status}">${ST[o.status]}</span></div>
+ <small>${new Date(o.created_at).toLocaleTimeString('az',{hour:'2-digit',minute:'2-digit'})}</small>
+ ${o.order_items.map(i=>`<div>${i.qty} x ${esc(i.name)}</div>`).join('')}${o.note?`<div class="muted">Qeyd: ${esc(o.note)}</div>`:''}
+ <div class="row"><b>${money(o.total)} ${esc(S.rest.currency)}</b><span>
+ ${o.status==='new'?`<button class="p" data-act="st" data-id="${o.id}" data-v="preparing">Hazırlanır</button>`:''}
+ ${o.status==='preparing'?`<button class="p" data-act="st" data-id="${o.id}" data-v="done">Hazırdır</button>`:''}
+ ${['new','preparing'].includes(o.status)?`<button class="d" data-act="st" data-id="${o.id}" data-v="cancelled">Ləğv</button>`:''}</span></div></div>`).join(''):'<p class="muted">Hələ sifariş yoxdur. Səhifə hər 10 saniyədən bir yenilənir.</p>',
+
+menu:()=>S.cats.map(c=>`<div class="card"><div class="row"><input style="flex:1" data-t="categories" data-id="${c.id}" data-f="name" value="${esc(c.name)}"><button class="d" data-act="delcat" data-id="${c.id}">Sil</button></div>
+ ${S.items.filter(i=>i.category_id===c.id).map(i=>`<div class="it">
+ <input data-t="items" data-id="${i.id}" data-f="name" value="${esc(i.name)}" aria-label="Ad">
+ <input data-t="items" data-id="${i.id}" data-f="description" value="${esc(i.description||'')}" placeholder="Təsvir" aria-label="Təsvir">
+ <input type="number" step="0.01" data-t="items" data-id="${i.id}" data-f="price" value="${i.price}" aria-label="Qiymət">
+ <label><input type="checkbox" data-t="items" data-id="${i.id}" data-f="available" ${i.available?'checked':''}> Var</label>
+ <button class="d" data-act="delitem" data-id="${i.id}">Sil</button></div>`).join('')}
+ <button style="margin-top:10px" data-act="additem" data-id="${c.id}">+ Məhsul</button></div>`).join('')+'<button class="p" data-act="addcat">+ Kateqoriya</button>',
+
+look:()=>{const t=S.rest.theme||{},a=S.p.role==='admin';return `<div class="card"><div class="f">
+ <div class="row"><span>Əsas rəng</span><input type="color" id="f" value="${t.flame||'#f2661f'}"></div>
+ <div class="row"><span>Qiymət və başlıq rəngi</span><input type="color" id="g" value="${t.gold||'#e9b45f'}"></div>
+ <div class="row"><span>Fon rəngi</span><input type="color" id="b" value="${t.bg||'#15161c'}"></div>
+ <label>Şrift (Google Fonts adı, məs: Pacifico)<input id="fo" value="${esc(t.font||'')}"></label>
+ <label>Logo şəkil linki<input id="lg" value="${esc(t.logo_url||'')}"></label>
+ <label><input type="checkbox" id="oe" ${S.rest.orders_enabled?'checked':''}> Masadan sifariş açıq</label>
+ ${a?`<label>Restoran adı<input id="nm" value="${esc(S.rest.name)}"></label><label>Dizayn açarı (theme_key)<input id="tk" value="${esc(S.rest.theme_key)}"></label>`:''}
+ <button class="p" data-act="savelook">Saxla</button></div></div>`},
+
+stats:()=>{if(!S.stats)return '';const d=Object.entries(S.stats.days),mx=Math.max(1,...d.map(x=>x[1].scan));
+ return `<div class="card"><b>Son 14 gün: skan və sifariş</b>${d.map(([k,v])=>`<div class="row" style="flex-wrap:nowrap"><small style="width:48px">${k.slice(5)}</small><div style="flex:1"><div class="bar" style="width:${v.scan/mx*100}%"></div></div><small style="width:90px;text-align:right">${v.scan} skan, ${v.order} sif.</small></div>`).join('')}</div>
+ <div class="card"><b>Ən çox sifariş edilənlər</b>${S.stats.top.map(([n,q])=>`<div class="row"><span>${esc(n)}</span><b>${q}</b></div>`).join('')||'<p class="muted">Hələ sifariş yoxdur.</p>'}</div>`},
+
+qr:()=>`<div class="card noprint row"><label>Masa sayı <input id="nt" type="number" min="0" max="200" value="${S.nt}" style="width:90px"></label><button data-act="qrgo">Yarat</button><button class="p" data-act="print">Çap et</button></div><div id="qrs"></div>`,
+
+rests:()=>`<div class="card"><b>Yeni restoran</b><div class="f"><input id="ns" placeholder="Link adı (məs: burger-house)"><input id="nn" placeholder="Restoran adı"><button class="p" data-act="addrest">Əlavə et</button></div></div>
+ ${S.rests.map(r=>`<div class="card row"><div><b>${esc(r.name)}</b><br><small>/${esc(r.slug)}</small></div><span><button data-act="pick" data-id="${r.id}">İdarə et</button> <button data-act="toggle" data-id="${r.id}">${r.active?'Söndür':'Aktiv et'}</button></span></div>`).join('')}
+ ${S.rest?`<div class="card"><b>Sahibkarı bu restorana bağla</b><p class="muted">Əvvəl Supabase > Authentication > Add user ilə hesab yarat, sonra SQL Editor-də işlət (EMAIL yerinə sahibkarın e-poçtu):</p><code>insert into profiles (id, role, restaurant_id) select id, 'owner', '${S.rest.id}' from auth.users where email = 'EMAIL';</code></div>`:''}`
+};
+const TABS={orders:'Sifarişlər',menu:'Menyu',look:'Görünüş',stats:'Statistika',qr:'QR kodlar'};
+
+function render(){
+  const adm=S.p.role==='admin',tabs={...TABS,...(adm?{rests:'Restoranlar'}:{})};
+  $('#app').innerHTML=`<header class="row"><div>${adm?`<select data-act="sel">${S.rests.map(r=>`<option value="${r.id}" ${S.rest?.id===r.id?'selected':''}>${esc(r.name)}</option>`).join('')}</select>`:`<b>${esc(S.rest?.name||'')}</b>`}</div><span>${S.rest?`<a style="color:var(--muted)" href="/${esc(S.rest.slug)}" target="_blank" rel="noopener">Menyuya bax</a> `:''}<button data-act="out">Çıx</button></span></header>
+  <div class="tabs">${Object.entries(tabs).map(([k,v])=>`<button class="${S.tab===k?'on':''}" data-act="tab" data-id="${k}">${v}</button>`).join('')}</div>${S.rest||S.tab==='rests'?V[S.tab]():'<p class="muted">Restoran yoxdur. "Restoranlar" bölməsindən əlavə et.</p>'}`;
+  if(S.tab==='qr')qrgo(false);
+}
+function qrgo(read=true){
+  if(read)S.nt=Math.max(0,Math.min(200,+$('#nt').value||0));
+  const base=location.origin+'/'+S.rest.slug,box=$('#qrs');box.innerHTML='';
+  for(let n=0;n<=S.nt;n++){const u=n?base+'?t='+n:base,d=document.createElement('div');d.className='qr';d.innerHTML=`<div></div><b>${n?'Masa '+n:'Menyu'}</b>`;box.appendChild(d);new QRCode(d.firstChild,{text:u,width:150,height:150})}
+}
+
+document.addEventListener('change',async e=>{
+  const el=e.target;
+  if(el.dataset.act==='sel')return pick(el.value);
+  if(!el.dataset.t)return;
+  const v=el.type==='checkbox'?el.checked:el.type==='number'?+el.value:el.value;
+  const r=await db.from(el.dataset.t).update({[el.dataset.f]:v}).eq('id',el.dataset.id);
+  r.error?alert('Saxlanılmadı'):toast('Saxlanıldı');
+});
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('button[data-act]');if(!b)return;
+  const a=b.dataset.act,id=b.dataset.id,rid=S.rest?.id;
+  const again=async()=>{await load();render()};
+  if(a==='tab'){S.tab=id;return again()}
+  if(a==='out'){await db.auth.signOut();return login()}
+  if(a==='pick')return pick(id);
+  if(a==='st'){await db.from('orders').update({status:b.dataset.v}).eq('id',id);return again()}
+  if(a==='addcat'){const n=prompt('Kateqoriya adı');if(n){await db.from('categories').insert({restaurant_id:rid,name:n,sort:S.cats.length+1});again()}}
+  if(a==='delcat'&&confirm('Kateqoriya silinsin? Məhsullar "Digər" bölməsinə düşəcək.')){await db.from('categories').delete().eq('id',id);again()}
+  if(a==='additem'){await db.from('items').insert({restaurant_id:rid,category_id:id,name:'Yeni məhsul',price:0,sort:S.items.length+1});again()}
+  if(a==='delitem'&&confirm('Məhsul silinsin?')){await db.from('items').delete().eq('id',id);again()}
+  if(a==='savelook'){
+    const th={...(S.rest.theme||{}),flame:$('#f').value,gold:$('#g').value,bg:$('#b').value,font:$('#fo').value.trim()||undefined,logo_url:$('#lg').value.trim()||undefined};
+    const up={theme:JSON.parse(JSON.stringify(th)),orders_enabled:$('#oe').checked};
+    if(S.p.role==='admin'){up.theme_key=$('#tk').value.trim()||'default';up.name=$('#nm').value.trim()||S.rest.name}
+    const r=await db.from('restaurants').update(up).eq('id',rid);
+    if(r.error)return alert('Saxlanılmadı');Object.assign(S.rest,up);toast('Saxlanıldı');
+  }
+  if(a==='qrgo')qrgo();
+  if(a==='print')window.print();
+  if(a==='addrest'){
+    const slug=$('#ns').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-'),name=$('#nn').value.trim();
+    if(!slug||!name)return alert('Link adı və ad lazımdır');
+    const r=await db.from('restaurants').insert({slug,name});if(r.error)return alert('Bu link adı artıq var');
+    S.rests=(await db.from('restaurants').select('*').order('created_at')).data;again();
+  }
+  if(a==='toggle'){const r=S.rests.find(x=>x.id===id);await db.from('restaurants').update({active:!r.active}).eq('id',id);S.rests=(await db.from('restaurants').select('*').order('created_at')).data;again()}
+});
+boot();
+</script>
+</body>
+</html>
