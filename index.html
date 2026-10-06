@@ -23,7 +23,8 @@ section h2{font-family:var(--display);font-size:30px;color:var(--gold);margin:26
 .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;cursor:pointer}
 .img{aspect-ratio:1/1;background:#101116}
 .img img,.dimg img,.bg img{width:100%;height:100%;object-fit:cover;display:block}
-.ph{width:100%;height:100%;display:grid;place-items:center;font-size:clamp(40px,12vw,64px);letter-spacing:-6px;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--flame) 30%,#1b1c23),#14151a 75%)}
+.ph{width:100%;height:100%;display:grid;place-items:center;text-align:center;padding:12px;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--flame) 22%,#1b1c23),#14151a 78%)}
+.ph span{font-family:var(--display);font-size:clamp(20px,6vw,30px);color:var(--gold);opacity:.4}
 .cp{padding:10px 12px 12px}
 .cp h3{margin:0;font-size:16px;font-weight:600;padding-right:56px}
 .cp small{color:var(--muted)}
@@ -49,7 +50,10 @@ section h2{font-family:var(--display);font-size:30px;color:var(--gold);margin:26
 #det{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);display:flex;align-items:flex-end}
 #dbox{position:relative;background:var(--bg);width:100%;max-width:600px;margin:0 auto;border-radius:24px 24px 0 0;max-height:94dvh;overflow:auto;animation:up .3s ease}
 @keyframes up{from{transform:translateY(40px);opacity:0}}
-.dimg{aspect-ratio:4/3;background:#101116}
+.dimg{aspect-ratio:4/3;background:#101116;position:relative}
+.ex{position:absolute;inset:0;background:#000;opacity:0;transition:opacity .6s;pointer-events:none}
+.ex.on{opacity:1}
+.ex img,.ex video{width:100%;height:100%;object-fit:contain}
 .x{position:absolute;right:12px;top:12px;z-index:2;width:40px;height:40px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:24px;cursor:pointer}
 .dbody{padding:16px 16px calc(env(safe-area-inset-bottom,0) + 24px)}
 .dbody .row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
@@ -138,7 +142,8 @@ function applyTheme(r){
   $('foot').textContent=(table?'Masa '+table+'. ':'')+'Qiymətlər '+r.currency+' ilədir';
 }
 const ingOf=s=>{const m=/^(\p{Extended_Pictographic}\S*)\s+(.+)$/u.exec(s);return m?{e:m[1],n:m[2]}:{e:'•',n:s}};
-const art=x=>x.image_url?`<img src="${esc(x.image_url)}" alt="" loading="lazy">`:`<div class="ph">${(x.ingredients||[]).slice(0,3).map(s=>ingOf(s).e).join('')||'🔥'}</div>`;
+const art=x=>x.image_url?`<img src="${esc(x.image_url)}" alt="" loading="lazy">`:`<div class="ph"><span>${esc(R?.name||'')}</span></div>`;
+const media=u=>/\.(mp4|webm)(\?|$)/i.test(u)?`<video src="${esc(u)}" muted loop playsinline preload="metadata"></video>`:`<img src="${esc(u)}" alt="">`;
 const qtyDiv=(id,c='')=>canOrder?`<div class="qty ${c}" data-q="${id}"></div>`:'';
 const card=x=>`<article class="card" data-open="${x.id}"><div class="img">${art(x)}</div>${qtyDiv(x.id)}<div class="cp"><h3>${esc(x.name)}</h3><small>${esc(x.weight||'')}</small></div><div class="pr">${money(+x.price)}</div></article>`;
 const slide=(x,c,i,n)=>`<section class="sl"><div class="bg">${art(x)}</div><div class="cnt">${i} / ${n}</div><div class="ov"><small>${esc(c)}</small><h2>${esc(x.name)}</h2>${x.description?`<p>${esc(x.description)}</p>`:''}<div class="row"><div class="pr">${money(+x.price)}</div><button class="pill" data-open="${x.id}">Ətraflı</button>${qtyDiv(x.id)}</div></div></section>`;
@@ -162,11 +167,11 @@ function openDet(id){
   const x=ITEMS.find(i=>i.id===id);if(!x)return;CUR=x;
   api('events',{m:'POST',h:MIN,b:{restaurant_id:R.id,type:'item_view',item_id:id}});
   const ing=x.ingredients||[];
-  $('dbox').innerHTML=`<button class="x" data-close aria-label="Bağla">×</button><div class="dimg">${art(x)}</div><div class="dbody">
+  $('dbox').innerHTML=`<button class="x" data-close aria-label="Bağla">×</button><div class="dimg">${art(x)}${x.explode_url?`<div class="ex" id="ex">${media(x.explode_url)}</div>`:''}</div><div class="dbody">
   <div class="row"><h2>${esc(x.name)}</h2><span class="pr big">${money(+x.price)} ${esc(R.currency)}</span></div>
   <div class="chips">${x.weight?`<span>${esc(x.weight)}</span>`:''}${x.calories?`<span>🔥 ${x.calories} kkal</span>`:''}</div>
   ${x.description?`<p class="desc">${esc(x.description)}</p>`:''}
-  ${ing.length?`<button class="tg" data-ing>Tərkibi aç</button><div id="stk" hidden></div>`:''}
+  ${(x.explode_url||ing.length)?`<button class="tg" data-ing>Tərkibi aç</button>${x.explode_url?'':'<div id="stk" hidden></div>'}`:''}
   ${qtyDiv(x.id,'big')}
   <button class="fbb" data-fb>Rəy bildir</button>
   <div id="fbf" hidden><select id="fk">${FB.map(f=>`<option>${f}</option>`).join('')}</select><textarea id="fm" rows="2" placeholder="Nə baş verdi? (istəyə bağlı)"></textarea><button class="btn" data-sendfb>Göndər</button></div></div>`;
@@ -201,7 +206,10 @@ document.addEventListener('click',e=>{
   if(b=t.closest('[data-open]')){openDet(b.dataset.open);return}
   if(t.closest('[data-close]')||t.id==='det'){$('det').hidden=true;lock();return}
   if(t.closest('[data-close2]')||t.id==='sheet'){$('sheet').hidden=true;lock();return}
-  if(b=t.closest('[data-ing]')){const s=$('stk'),open=s.hidden;s.hidden=!open;b.textContent=open?'Tərkibi bağla':'Tərkibi aç';if(open)s.innerHTML=CUR.ingredients.map((v,i)=>{const g=ingOf(v);return `<div class="ing" style="animation-delay:${i*130}ms"><i>${g.e}</i><span>${esc(g.n)}</span></div>`}).join('');return}
+  if(b=t.closest('[data-ing]')){const ex=$('ex'),st=$('stk');
+    if(ex){const on=ex.classList.toggle('on');b.textContent=on?'Tərkibi bağla':'Tərkibi aç';const v=ex.querySelector('video');if(v){if(on){v.currentTime=0;v.play()}else v.pause()}}
+    else if(st){const o=st.hidden;st.hidden=!o;b.textContent=o?'Tərkibi bağla':'Tərkibi aç';if(o)st.innerHTML=CUR.ingredients.map((v,i)=>`<div class="ing" style="animation-delay:${i*130}ms"><span>${esc(ingOf(v).n)}</span></div>`).join('')}
+    return}
   if(t.closest('[data-fb]')){$('fbf').hidden=!$('fbf').hidden;return}
   if(b=t.closest('[data-sendfb]')){sendFb(b);return}
   if(t.closest('#open')){openSheet();return}
