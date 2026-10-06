@@ -101,7 +101,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 <div id="sheet" hidden><div id="box"></div></div>
 
 <script>
-const SB_URL='https://jvvgylzfkciiaoodcsgf.supabase.co', SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2dmd5bHpma2NpaWFvb2Rjc2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMDgxNDQsImV4cCI6MjEwNjc4NDE0NH0.9hmwX-K8kpl5Pofyhgm4DzQ6OhpiRe4fM1Bds0OShMg';
+const SB_URL='https://qybeegkeowpdkdmzoryj.supabase.co',SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5YmVlZ2tlb3dwZGtkbXpvcnlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMDk5NjYsImV4cCI6MjEwNjg4NTk2Nn0.MQ5iDWLxUXiKy3qbzAh6AbdxXeJyTfRVQ1hkYOw7n5o';
 const api=(p,o={})=>fetch(SB_URL+'/rest/v1/'+p,{method:o.m||'GET',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',...(o.h||{})},body:o.b?JSON.stringify(o.b):undefined});
 const MIN={Prefer:'return=minimal'};
 const q=new URLSearchParams(location.search);
