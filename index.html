@@ -151,7 +151,7 @@ const qtyDiv=(id,c='')=>canOrder?`<div class="qty ${c}" data-q="${id}"></div>`:'
 const disc=x=>{const o=+x.old_price,p=+x.price;return o>p&&p>=0?{o,p,pct:Math.max(1,Math.round((1-p/o)*100)),sv:o-p}:null};
 const BADGE_COL={'Yeni':'#1fb36b','Sevilən':'#e5486c','Şefin seçimi':'#8a5cf5','Kombo':'#2f7de1','Acı':'#e0301e','Vegetarian':'#3f9b4a','Ən çox sifariş edilən':'var(--flame)'};
 const bdg=b=>`<span class="rb" style="background:${BADGE_COL[b]||'var(--gold)'}">${esc(b)}</span>`;
-const badgesOf=x=>[...(TOP.includes(x.id)?['Ən çox sifariş edilən']:[]),...(x.badges||[])].slice(0,2).map(bdg).join('');
+const badgesOf=x=>[...(x.badges||[]),...(TOP.includes(x.id)?['Ən çox sifariş edilən']:[])].slice(0,2).map(bdg).join('');
 const priceBig=x=>{const d=disc(x);return `<span class="pr big${d?' dc':''}">${d?`<s>${money(d.o)}</s>`:''}${money(+x.price)} ${esc(R.currency)}</span>`};
 const card=x=>{const d=disc(x);return `<article class="card" data-open="${x.id}"><div class="img">${art(x)}${d?`<span class="sale">−${d.pct}%</span>`:''}</div>${qtyDiv(x.id)}<div class="rbs">${badgesOf(x)}</div><div class="cp"><h3>${esc(x.name)}</h3><small>${esc(x.weight||'')}</small></div>${d?`<div class="pr dc"><s>${money(d.o)}</s><b>${money(d.p)}</b></div>`:`<div class="pr">${money(+x.price)}</div>`}</article>`};
 function render(){
