@@ -19,12 +19,12 @@ section h2{font-family:var(--display);font-size:30px;color:var(--gold);margin:26
 .note{margin:0 0 10px;color:var(--muted);font-size:14px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;cursor:pointer}
-.img{aspect-ratio:4/3;background:#101116}
+.img{aspect-ratio:4/3;background:#101116;position:relative}
 .img img,.dimg img{width:100%;height:100%;object-fit:cover;display:block}
 .ph{width:100%;height:100%;display:grid;place-items:center;text-align:center;padding:12px;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--flame) 22%,#1b1c23),#14151a 78%)}
 .ph span{font-family:var(--display);font-size:clamp(20px,6vw,30px);color:var(--gold);opacity:.4}
 .cp{padding:10px 12px 12px}
-.cp h3{margin:0;font-size:16px;font-weight:600;padding-right:56px}
+.cp h3{margin:0;font-size:16px;font-weight:600;padding-right:72px}
 .cp small{color:var(--muted)}
 .pr{display:grid;place-items:center;min-width:54px;height:54px;padding:0 6px;border-radius:50%;background:#101116;border:2px solid var(--gold);color:var(--gold);font-weight:700;font-size:15px;line-height:1}
 .card .pr{position:absolute;right:8px;bottom:8px}
@@ -67,8 +67,16 @@ select,textarea,#tb{width:100%;margin-top:8px;padding:11px;border-radius:10px;bo
 #box h2{font-family:var(--display);color:var(--gold);margin:0 0 8px}
 .muted{color:var(--muted)}
 .rbs{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-end;z-index:2}
-.rb{background:var(--gold);color:#1a1408;font:700 11px var(--body);padding:3px 9px;border-radius:99px;box-shadow:0 2px 6px rgba(0,0,0,.4)}
-.rb.hot{background:var(--flame);color:#fff}
+.rb{color:#fff;font:700 12px var(--body);padding:4px 11px;border-radius:99px;box-shadow:0 3px 10px rgba(0,0,0,.45);letter-spacing:.01em;animation:pop .45s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.sale{position:absolute;left:8px;bottom:8px;background:#e5322d;color:#fff;font:800 15px var(--body);padding:5px 10px;border-radius:10px;transform:rotate(-5deg);box-shadow:0 3px 10px rgba(0,0,0,.5)}
+.card .pr.dc{border-radius:16px;min-width:66px;height:auto;padding:6px 10px;flex-direction:column;align-items:center;justify-content:center;gap:0;display:flex;border-color:#e5322d}
+.pr.dc s{font-size:12px;color:var(--muted);font-weight:500;line-height:1.1}
+.pr.dc b{font-size:18px;line-height:1.15}
+.pr.big s{color:var(--muted);font-size:14px;margin-right:8px;font-weight:500}
+.pr.big.dc{border-color:#e5322d}
+.chips .rb{border:0;color:#fff;border-radius:99px;padding:4px 11px;font-size:12px}
+.chips .sv{background:rgba(31,179,107,.14);border-color:#1fb36b;color:#5fe0a0;font-weight:600}
 .op{color:var(--muted);margin-left:8px;font-size:13px}
 .line{align-items:center;display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
 .link{background:none;border:0;color:var(--muted);font:16px var(--body);padding:12px;width:100%;cursor:pointer}
@@ -139,8 +147,12 @@ const ingOf=s=>{const m=/^(\p{Extended_Pictographic}\S*)\s+(.+)$/u.exec(s);retur
 const art=x=>x.image_url?`<img src="${esc(x.image_url)}" alt="" loading="lazy">`:`<div class="ph"><span>${esc(R?.name||'')}</span></div>`;
 const media=u=>/\.(mp4|webm)(\?|$)/i.test(u)?`<video src="${esc(u)}" muted loop playsinline preload="metadata"></video>`:`<img src="${esc(u)}" alt="">`;
 const qtyDiv=(id,c='')=>canOrder?`<div class="qty ${c}" data-q="${id}"></div>`:'';
-const badgesOf=x=>[...(TOP.includes(x.id)?[['Ən çox sifariş edilən',1]]:[]),...(x.badges||[]).map(b=>[b,0])].slice(0,2).map(([b,h])=>`<span class="rb${h?' hot':''}">${esc(b)}</span>`).join('');
-const card=x=>`<article class="card" data-open="${x.id}"><div class="img">${art(x)}</div>${qtyDiv(x.id)}<div class="rbs">${badgesOf(x)}</div><div class="cp"><h3>${esc(x.name)}</h3><small>${esc(x.weight||'')}${x.old_price&&+x.old_price>+x.price?`<s class="op">${money(+x.old_price)}</s>`:''}</small></div><div class="pr">${money(+x.price)}</div></article>`;
+const disc=x=>{const o=+x.old_price,p=+x.price;return o>p&&p>=0?{o,p,pct:Math.max(1,Math.round((1-p/o)*100)),sv:o-p}:null};
+const BADGE_COL={'Yeni':'#1fb36b','Sevilən':'#e5486c','Şefin seçimi':'#8a5cf5','Kombo':'#2f7de1','Acı':'#e0301e','Vegetarian':'#3f9b4a','Ən çox sifariş edilən':'var(--flame)'};
+const bdg=b=>`<span class="rb" style="background:${BADGE_COL[b]||'var(--gold)'}">${esc(b)}</span>`;
+const badgesOf=x=>[...(TOP.includes(x.id)?['Ən çox sifariş edilən']:[]),...(x.badges||[])].slice(0,2).map(bdg).join('');
+const priceBig=x=>{const d=disc(x);return `<span class="pr big${d?' dc':''}">${d?`<s>${money(d.o)}</s>`:''}${money(+x.price)} ${esc(R.currency)}</span>`};
+const card=x=>{const d=disc(x);return `<article class="card" data-open="${x.id}"><div class="img">${art(x)}${d?`<span class="sale">−${d.pct}%</span>`:''}</div>${qtyDiv(x.id)}<div class="rbs">${badgesOf(x)}</div><div class="cp"><h3>${esc(x.name)}</h3><small>${esc(x.weight||'')}</small></div>${d?`<div class="pr dc"><s>${money(d.o)}</s><b>${money(d.p)}</b></div>`:`<div class="pr">${money(+x.price)}</div>`}</article>`};
 function render(){
   const known=new Set(CATS.map(c=>c.id));
   const groups=CATS.map(c=>({n:c.name,note:c.note,its:ITEMS.filter(x=>x.category_id===c.id)}));
@@ -162,8 +174,8 @@ function openDet(id){
   api('events',{m:'POST',h:MIN,b:{restaurant_id:R.id,type:'item_view',item_id:id}});
   const ing=x.ingredients||[];
   $('dbox').innerHTML=`<button class="x" data-close aria-label="Bağla">×</button><div class="dimg">${art(x)}${x.explode_url?`<div class="ex" id="ex">${media(x.explode_url)}</div>`:''}</div><div class="dbody">
-  <div class="row"><h2>${esc(x.name)}</h2><span class="pr big">${money(+x.price)} ${esc(R.currency)}</span></div>
-  <div class="chips">${x.weight?`<span>${esc(x.weight)}</span>`:''}${x.calories?`<span>🔥 ${x.calories} kkal</span>`:''}${x.old_price&&+x.old_price>+x.price?`<span>Qənaət ${money(x.old_price-x.price)} ${esc(R.currency)}</span>`:''}${(x.badges||[]).map(b=>`<span>${esc(b)}</span>`).join('')}</div>
+  <div class="row"><h2>${esc(x.name)}</h2>${priceBig(x)}</div>
+  <div class="chips">${x.weight?`<span>${esc(x.weight)}</span>`:''}${x.calories?`<span>🔥 ${x.calories} kkal</span>`:''}${disc(x)?`<span class="sv">Qənaət ${money(disc(x).sv)} ${esc(R.currency)} (−${disc(x).pct}%)</span>`:''}${(x.badges||[]).map(bdg).join('')}</div>
   ${x.description?`<p class="desc">${esc(x.description)}</p>`:''}
   ${(x.explode_url||ing.length)?`<button class="tg" data-ing>Tərkibi aç</button>${x.explode_url?'':'<div id="stk" hidden></div>'}`:''}
   ${qtyDiv(x.id,'big')}
