@@ -84,7 +84,17 @@ h2{margin:0 0 6px;font-size:18px}
 .mvb{display:flex;flex-direction:column;gap:3px;flex:none}
 .mvb button{padding:2px 10px;line-height:1.15;font-size:13px}
 .mvb button:disabled{opacity:.25;cursor:default}
-.bds{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:6px}
+.bds{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.bp{margin:0;cursor:pointer;position:relative;display:inline-block}
+.bp input{position:absolute;opacity:0;pointer-events:none}
+.bp span{display:inline-block;padding:8px 16px;border-radius:99px;border:1.5px solid var(--c);color:var(--c);font-weight:600;font-size:14px;transition:.15s;user-select:none}
+.bp:hover span{background:color-mix(in srgb,var(--c) 14%,transparent)}
+.bp input:checked+span{background:var(--c);color:#fff;box-shadow:0 3px 12px color-mix(in srgb,var(--c) 45%,transparent)}
+.bp input:checked+span::before{content:'✓ '}
+.bp input:focus-visible+span{outline:2px solid #fff;outline-offset:2px}
+.mcs{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.mc{color:#fff;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px}
+.chk{gap:10px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .pss{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .ps{display:flex;align-items:center;gap:6px;color:#fff;border-width:2px}
@@ -231,6 +241,8 @@ const mediaBox=(k,label,url,video)=>`<div class="mbx"><b>${label}</b><div class=
 
 /* ---------- görünüşlər ---------- */
 const BADGES=['Yeni','Sevilən','Şefin seçimi','Kombo','Acı','Vegetarian'];
+const BADGE_COL={'Yeni':'#1fb36b','Sevilən':'#e5486c','Şefin seçimi':'#8a5cf5','Kombo':'#2f7de1','Acı':'#e0301e','Vegetarian':'#3f9b4a'};
+const mini=b=>`<span class="mc" style="background:${BADGE_COL[b]||'#888'}">${esc(b)}</span>`;
 const FONTS=['Almendra','Playfair Display','Pacifico','Rubik','Lobster','Oswald','Montserrat','Poppins'];
 const PRESETS=[['Snacky alovu','#f2661f','#e9b45f','#15161c','#b98a5a',''],['Qara və qızıl','#c9a24a','#e8d28a','#0d0d0d','#8a7237','Playfair Display'],['Meşə yaşılı','#3fa66b','#e6d9a8','#0f1a14','#6b8f5a',''],['Dəniz mavisi','#2f7de1','#bfe0ff','#0c1424','#4d6f9e','Montserrat'],['Şirin çəhrayı','#e8567f','#ffd1dc','#1d1218','#a8566e','Pacifico'],['Qırmızı fast-food','#e31e24','#ffc72c','#17120f','#a8632d','Rubik']];
 const FP={},FOK={};
@@ -267,7 +279,7 @@ orders:d=>{
 menu:d=>{
   if(!d)return skel();
   const mvb=(t,id,f,l)=>`<span class="mvb"><button data-act="mv" data-t="${t}" data-id="${id}" data-d="-1" ${f?'disabled':''} title="Yuxarı" aria-label="Yuxarı">↑</button><button data-act="mv" data-t="${t}" data-id="${id}" data-d="1" ${l?'disabled':''} title="Aşağı" aria-label="Aşağı">↓</button></span>`;
-  const row=(x,f,l)=>`<div class="ir">${mvb('items',x.id,f,l)}<div class="th">${x.image_url?`<img src="${esc(x.image_url)}" alt="" loading="lazy">`:'şəkil yoxdur'}</div><div class="grow"><b>${esc(x.name)}</b><br><small>${money(x.price)} ${esc(S.rest.currency)}${x.weight?', '+esc(x.weight):''}${(x.badges||[]).length?', '+esc(x.badges.join(', ')):''}${x.explode_url?', animasiya var':''}</small></div><label class="sw" title="Menyuda göstər"><input type="checkbox" data-av="${x.id}" ${x.available?'checked':''}><span></span></label><button data-act="edit" data-id="${x.id}">Redaktə</button></div>`;
+  const row=(x,f,l)=>`<div class="ir">${mvb('items',x.id,f,l)}<div class="th">${x.image_url?`<img src="${esc(x.image_url)}" alt="" loading="lazy">`:'şəkil yoxdur'}</div><div class="grow"><b>${esc(x.name)}</b><br><small>${money(x.price)} ${esc(S.rest.currency)}${x.weight?', '+esc(x.weight):''}${x.explode_url?', animasiya var':''}</small>${(x.badges||[]).length?`<div class="mcs">${x.badges.map(mini).join('')}</div>`:''}</div><label class="sw" title="Menyuda göstər"><input type="checkbox" data-av="${x.id}" ${x.available?'checked':''}><span></span></label><button data-act="edit" data-id="${x.id}">Redaktə</button></div>`;
   const rows=a=>a.map((x,i)=>row(x,i===0,i===a.length-1)).join('');
   const loose=d.items.filter(i=>!d.cats.find(c=>c.id===i.category_id));
   return '<p class="muted" style="margin:0 0 12px">Sıranı ↑ ↓ düymələri ilə dəyişirsən: məsələn "Kombolar" kateqoriyasını ən yuxarı çıxar. Yeməyi müvəqqəti gizlətmək üçün sağdakı düyməni söndür.</p>'
@@ -287,7 +299,7 @@ look:()=>{
   <div class="card"><h2>Logo</h2><p class="muted" style="margin:0">Logonun fonu qara və ya ağdırsa, fon avtomatik silinir və kənar boşluqlar kəsilir.</p>${mediaBox('logo','Logo şəkli',t.logo_url)}
    <label>Logo ölçüsü: <b id="lsv">${t.logo_size||100}</b> px<input type="range" id="f_lsize" min="40" max="220" value="${t.logo_size||100}"></label></div>
   <div class="card"><h2>Fon şəkli (istəyə bağlı)</h2><p class="muted" style="margin:0">Boş qoysan standart tünd fon qalır.</p>${mediaBox('bgimg','Fon şəkli',t.bg_image)}</div>
-  <div class="card"><h2>Sifariş</h2><label class="chk"><input type="checkbox" id="f_oe" ${S.rest.orders_enabled?'checked':''}> Müştərilər menyudan sifariş verə bilsin</label><small>Söndürsən, menyuda yalnız yeməklərə baxmaq olar, səbət və sifariş düyməsi görünmür.</small></div>
+  <div class="card"><h2>Sifariş</h2><label class="chk"><span class="sw"><input type="checkbox" id="f_oe" ${S.rest.orders_enabled?'checked':''}><span></span></span> Müştərilər menyudan sifariş verə bilsin</label><small>Söndürsən, menyuda yalnız yeməklərə baxmaq olar, səbət və sifariş düyməsi görünmür.</small></div>
   ${a?`<div class="card"><h2>Admin ayarları</h2><div class="g2"><label>Restoran adı<input id="f_nm" value="${esc(S.rest.name)}"></label><label>Dizayn açarı (theme_key)<input id="f_tk" value="${esc(S.rest.theme_key)}"></label></div></div>`:''}
   <div class="mf"><span></span><button class="p" data-act="savelook">Dəyişiklikləri saxla</button></div></div>
   <div class="pvw"><b class="muted">Canlı baxış</b><div id="pvw"></div><small class="muted">Təxmini görünüşdür. Saxlayandan sonra "Menyuya bax" ilə həqiqisini yoxla.</small></div></div>`;
@@ -335,10 +347,10 @@ function openEdit(id){
   <label>Kateqoriya<select id="f_cat">${d.cats.map(c=>`<option value="${c.id}" ${c.id===x.category_id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>
   <label>Təsvir<textarea id="f_desc" rows="2">${esc(x.description||'')}</textarea></label>
   <div class="g2"><label>Köhnə qiymət (endirim və ya kombo qənaəti göstərmək üçün)<input id="f_old" type="number" step="0.01" value="${x.old_price??''}"></label><div></div></div>
-  <div style="margin-top:12px"><small>Nişanlar (kartın küncündə görünür)</small><div class="bds">${BADGES.map(b=>`<label class="chk"><input type="checkbox" data-bd value="${b}" ${(x.badges||[]).includes(b)?'checked':''}> ${b}</label>`).join('')}</div></div>
+  <div style="margin-top:12px"><small>Nişanlar: toxunub seç, menyuda yeməyin şəklinin küncündə rəngli etiket kimi görünür</small><div class="bds">${BADGES.map(b=>`<label class="bp" style="--c:${BADGE_COL[b]}"><input type="checkbox" data-bd value="${b}" ${(x.badges||[]).includes(b)?'checked':''}><span>${b}</span></label>`).join('')}</div></div>
   <label>Tərkib (hər sətirdə biri, emojisiz)<textarea id="f_ing" rows="4">${esc((x.ingredients||[]).map(s=>s.replace(/^\p{Extended_Pictographic}\S*\s+/u,'')).join('\n'))}</textarea></label>
   ${mediaBox('image','Yeməyin şəkli',x.image_url)}${mediaBox('explode','Tərkib animasiyası (şəkil, GIF və ya MP4, ən çox 10 MB)',x.explode_url,true)}
-  <label class="chk"><input type="checkbox" id="f_av" ${x.available?'checked':''}> Menyuda göstərilir</label>
+  <label class="chk"><span class="sw"><input type="checkbox" id="f_av" ${x.available?'checked':''}><span></span></span> Menyuda göstərilir</label>
   <div class="mf"><button class="d" data-act="delitem" data-id="${id}">Məhsulu sil</button><span><button data-act="mclose">Ləğv</button> <button class="p" data-act="saveitem" data-id="${id}">Saxla</button></span></div></div>`;
   $('#modal').hidden=false;
 }
