@@ -89,6 +89,7 @@ h2{margin:0 0 6px;font-size:18px}
 .bp:hover{background:color-mix(in srgb,var(--c) 14%,transparent)}
 .bp.on{background:var(--c);color:#fff;box-shadow:0 3px 12px color-mix(in srgb,var(--c) 45%,transparent)}
 .bp .no{display:inline-grid;place-items:center;width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.3);font-size:11px}
+.lnk{background:none;border:0;color:var(--acc2);padding:0 4px;text-decoration:underline;font-size:13px}
 .bord{margin-top:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px}
 .bo{display:inline-flex;align-items:center;gap:2px;margin:6px 8px 0 0;padding:3px 4px 3px 12px;border-radius:99px;color:#fff;font-size:13px;font-weight:600}
 .bo button{padding:1px 8px;border:0;background:rgba(0,0,0,.25);color:#fff;border-radius:99px;font-size:13px;line-height:1.3;margin-left:2px}
@@ -247,7 +248,7 @@ let BD=[];
 function bdPaint(){
   const el=$('#bdbox');if(!el)return;
   el.innerHTML=`<div class="bds">${BADGES.map(b=>{const i=BD.indexOf(b);return `<button type="button" class="bp${i>=0?' on':''}" style="--c:${BADGE_COL[b]}" data-act="bdt" data-b="${b}">${i>=0?`<span class="no">${i+1}</span>`:''}${b}</button>`}).join('')}</div>`
-  +(BD.length>1?`<div class="bord"><small>Menyuda görünmə sırası (kartda ilk 2-si, detalda hamısı görünür):</small><br>${BD.map((b,i)=>`<span class="bo" style="background:${BADGE_COL[b]||'#888'}">${i+1}. ${esc(b)}<button type="button" data-act="bdm" data-b="${b}" data-d="-1" ${i===0?'disabled':''} aria-label="Əvvələ">←</button><button type="button" data-act="bdm" data-b="${b}" data-d="1" ${i===BD.length-1?'disabled':''} aria-label="Sonraya">→</button></span>`).join('')}</div>`:'');
+  +(BD.length?`<div style="margin-top:10px"><small>Kartda ilk 2-si, yeməyin detalında hamısı görünür.</small> <button type="button" class="lnk" data-act="bdc">Seçimi təmizlə</button></div>`:'');
 }
 const mini=b=>`<span class="mc" style="background:${BADGE_COL[b]||'#888'}">${esc(b)}</span>`;
 const FONTS=['Almendra','Playfair Display','Pacifico','Rubik','Lobster','Oswald','Montserrat','Poppins'];
@@ -355,7 +356,7 @@ function openEdit(id){
   <label>Kateqoriya<select id="f_cat">${d.cats.map(c=>`<option value="${c.id}" ${c.id===x.category_id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>
   <label>Təsvir<textarea id="f_desc" rows="2">${esc(x.description||'')}</textarea></label>
   <div class="g2"><label>Köhnə qiymət (endirim və ya kombo qənaəti göstərmək üçün)<input id="f_old" type="number" step="0.01" value="${x.old_price??''}"></label><div></div></div>
-  <div style="margin-top:12px"><small>Nişanlar: nə ardıcıllıqla toxunsan, o sırada nömrələnir (1, 2, 3). İstəsən aşağıdakı ← → ilə sıranı dəyiş.</small><div id="bdbox"></div></div>
+  <div style="margin-top:12px"><small>Nişanlar: nə ardıcıllıqla toxunsan, menyuda o sırada görünür (1, 2, 3). Sırani dəyişmək üçün "Seçimi təmizlə" basıb istədiyin ardıcıllıqla yenidən toxun.</small><div id="bdbox"></div></div>
   <label>Tərkib (hər sətirdə biri, emojisiz)<textarea id="f_ing" rows="4">${esc((x.ingredients||[]).map(s=>s.replace(/^\p{Extended_Pictographic}\S*\s+/u,'')).join('\n'))}</textarea></label>
   ${mediaBox('image','Yeməyin şəkli',x.image_url)}${mediaBox('explode','Tərkib animasiyası (şəkil, GIF və ya MP4, ən çox 10 MB)',x.explode_url,true)}
   <label class="chk"><span class="sw"><input type="checkbox" id="f_av" ${x.available?'checked':''}><span></span></span> Menyuda göstərilir</label>
@@ -387,7 +388,7 @@ document.addEventListener('click',async e=>{
   if(a==='clr'){$('#f_'+id).value='';$('#pv_'+id).innerHTML='Yoxdur';if(S.tab==='look')pvUpdate();return}
   if(a==='st'){if(chk(await db.from('orders').update({status:b.dataset.v}).eq('id',id)))again();return}
   if(a==='bdt'){const n=b.dataset.b,i=BD.indexOf(n);if(i<0)BD.push(n);else BD.splice(i,1);bdPaint();return}
-  if(a==='bdm'){const i=BD.indexOf(b.dataset.b),j=i+(+b.dataset.d);if(i<0||j<0||j>=BD.length)return;[BD[i],BD[j]]=[BD[j],BD[i]];bdPaint();return}
+  if(a==='bdc'){BD=[];bdPaint();return}
   if(a==='mv'){await mv(b.dataset.t,id,+b.dataset.d);return}
   if(a==='edit')return openEdit(id);
   if(a==='addcat'){const n=prompt('Kateqoriya adı');if(n&&chk(await db.from('categories').insert({restaurant_id:rid,name:n,sort:(S.C[key('menu')]?.cats.length||0)+1})))again();return}
