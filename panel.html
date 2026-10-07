@@ -87,7 +87,7 @@ code{display:block;white-space:pre-wrap;word-break:break-all;background:#0a0b0e;
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div id="app"><p style="padding:24px;color:#8d8f9a">Yüklənir...</p></div>
 <div id="modal" hidden></div>
 <div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -125,9 +125,9 @@ function login(msg){
 function shell(){
   const adm=S.p.role==='admin',nav={...NAV,...(adm?{rests:'Restoranlar'}:{})};
   $('#app').innerHTML=`<div class="app"><aside class="side"><div class="brand">Menyu paneli</div><nav class="nav">${Object.entries(nav).map(([k,v])=>`<button data-act="tab" data-id="${k}">${v}</button>`).join('')}</nav><button class="out" data-act="out">Çıx</button></aside><main><div class="top" id="top"></div><div id="view"></div></main></div>`;
-  top();
+  topbar();
 }
-function top(){
+function topbar(){
   const adm=S.p.role==='admin';
   $('#top').innerHTML=`<div>${adm&&S.rests.length?`<select data-act="sel">${S.rests.map(r=>`<option value="${r.id}" ${S.rest?.id===r.id?'selected':''}>${esc(r.name)}</option>`).join('')}</select>`:`<h1>${esc(S.rest?.name||'')}</h1>`}</div>${S.rest?`<a href="/${esc(S.rest.slug)}" target="_blank" rel="noopener">Menyuya bax</a>`:''}`;
 }
@@ -258,7 +258,7 @@ document.addEventListener('change',async e=>{
   }
   if(t.dataset.av){const r=await db.from('items').update({available:t.checked}).eq('id',t.dataset.av);if(chk(r)){const x=S.C[key('menu')].items.find(i=>i.id===t.dataset.av);if(x)x.available=t.checked;toast('Saxlanıldı')}else t.checked=!t.checked;return}
   if(t.dataset.cn){if(chk(await db.from('categories').update({name:t.value.trim()||'Kateqoriya'}).eq('id',t.dataset.cn)))toast('Saxlanıldı');return}
-  if(t.dataset.act==='sel'){S.rest=S.rests.find(r=>r.id===t.value);top();go(S.tab)}
+  if(t.dataset.act==='sel'){S.rest=S.rests.find(r=>r.id===t.value);topbar();go(S.tab)}
 });
 document.addEventListener('click',async e=>{
   if(e.target.id==='modal'){$('#modal').hidden=true;return}
@@ -284,16 +284,19 @@ document.addEventListener('click',async e=>{
     const th={...(S.rest.theme||{}),flame:v('flame'),gold:v('gold'),bg:v('bg'),font:v('font').trim()||undefined,logo_url:v('logo')||undefined,bg_image:v('bgimg')||undefined};
     const o={theme:JSON.parse(JSON.stringify(th)),orders_enabled:$('#f_oe').checked};
     if(S.p.role==='admin'){o.theme_key=v('tk').trim()||'default';o.name=v('nm').trim()||S.rest.name}
-    if(chk(await db.from('restaurants').update(o).eq('id',rid))){Object.assign(S.rest,o);top();toast('Saxlanıldı')}return}
+    if(chk(await db.from('restaurants').update(o).eq('id',rid))){Object.assign(S.rest,o);topbar();toast('Saxlanıldı')}return}
   if(a==='qrgo')return qrgo();
   if(a==='print')return window.print();
   if(a==='addrest'){
     const slug=$('#ns').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-'),name=$('#nn').value.trim();
     if(!slug||!name)return toast('Link adı və ad lazımdır',1);
-    if(chk(await db.from('restaurants').insert({slug,name}))){S.rests=(await db.from('restaurants').select('*').order('created_at')).data;if(!S.rest)S.rest=S.rests[0];top();paint()}return}
-  if(a==='pickr'){S.rest=S.rests.find(r=>r.id===id);top();go('menu');return}
+    if(chk(await db.from('restaurants').insert({slug,name}))){S.rests=(await db.from('restaurants').select('*').order('created_at')).data;if(!S.rest)S.rest=S.rests[0];topbar();paint()}return}
+  if(a==='pickr'){S.rest=S.rests.find(r=>r.id===id);topbar();go('menu');return}
   if(a==='toggle'){const r=S.rests.find(x=>x.id===id);if(chk(await db.from('restaurants').update({active:!r.active}).eq('id',id))){r.active=!r.active;paint()}return}
 });
+const showErr=m=>{const a=document.getElementById('app');if(a&&!a.querySelector('.app,.lg'))a.innerHTML='<div class="lg"><div class="card"><h2>Xəta</h2><p class="muted">Panel açılmadı. Bu mətni mənə göndər:</p><code>'+String(m).replace(/</g,'&lt;')+'</code><button class="p" onclick="location.reload()">Yenilə</button></div></div>'};
+window.addEventListener('error',e=>showErr(e.message));
+window.addEventListener('unhandledrejection',e=>showErr(e.reason&&e.reason.message||e.reason));
 boot();
 </script>
 </body>
