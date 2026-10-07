@@ -14,6 +14,7 @@ button:hover{background:#2a2e3a}
 button.p{background:linear-gradient(135deg,var(--acc),var(--acc2));border:0;color:#fff;font-weight:600}
 button.d{color:#ff8a80}
 input:not([type=checkbox]):not([type=color]):not([type=file]),select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0f1015;margin-top:5px}
+textarea{resize:none}
 input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(--acc) 60%,transparent);border-color:transparent}
 input[type=color]{width:64px;height:40px;border:1px solid var(--line);border-radius:8px;background:none;margin-top:5px;padding:2px}
 label{display:block;font-size:13px;color:var(--muted);margin-top:12px}
@@ -80,6 +81,9 @@ h2{margin:0 0 6px;font-size:18px}
 .pvr{display:flex;justify-content:space-between;align-items:center;padding:10px;color:#f4ead8}
 .pvp{border:2px solid;border-radius:50%;width:48px;height:48px;display:grid;place-items:center;background:#101116;font:700 14px system-ui}
 .pva{position:absolute;left:8px;top:8px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 20px system-ui}
+.mvb{display:flex;flex-direction:column;gap:3px;flex:none}
+.mvb button{padding:2px 10px;line-height:1.15;font-size:13px}
+.mvb button:disabled{opacity:.25;cursor:default}
 .bds{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:6px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .pss{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
@@ -262,10 +266,13 @@ orders:d=>{
 },
 menu:d=>{
   if(!d)return skel();
-  const row=x=>`<div class="ir"><div class="th">${x.image_url?`<img src="${esc(x.image_url)}" alt="" loading="lazy">`:'şəkil yoxdur'}</div><div class="grow"><b>${esc(x.name)}</b><br><small>${money(x.price)} ${esc(S.rest.currency)}${x.weight?', '+esc(x.weight):''}${x.explode_url?', animasiya var':''}</small></div><label class="sw" title="Menyuda göstər"><input type="checkbox" data-av="${x.id}" ${x.available?'checked':''}><span></span></label><button data-act="edit" data-id="${x.id}">Redaktə</button></div>`;
+  const mvb=(t,id,f,l)=>`<span class="mvb"><button data-act="mv" data-t="${t}" data-id="${id}" data-d="-1" ${f?'disabled':''} title="Yuxarı" aria-label="Yuxarı">↑</button><button data-act="mv" data-t="${t}" data-id="${id}" data-d="1" ${l?'disabled':''} title="Aşağı" aria-label="Aşağı">↓</button></span>`;
+  const row=(x,f,l)=>`<div class="ir">${mvb('items',x.id,f,l)}<div class="th">${x.image_url?`<img src="${esc(x.image_url)}" alt="" loading="lazy">`:'şəkil yoxdur'}</div><div class="grow"><b>${esc(x.name)}</b><br><small>${money(x.price)} ${esc(S.rest.currency)}${x.weight?', '+esc(x.weight):''}${(x.badges||[]).length?', '+esc(x.badges.join(', ')):''}${x.explode_url?', animasiya var':''}</small></div><label class="sw" title="Menyuda göstər"><input type="checkbox" data-av="${x.id}" ${x.available?'checked':''}><span></span></label><button data-act="edit" data-id="${x.id}">Redaktə</button></div>`;
+  const rows=a=>a.map((x,i)=>row(x,i===0,i===a.length-1)).join('');
   const loose=d.items.filter(i=>!d.cats.find(c=>c.id===i.category_id));
-  return '<p class="muted" style="margin:0 0 12px">Yeməyi müvəqqəti gizlətmək üçün sağdakı düyməni söndür. Şəkil, kalori və tərkib üçün Redaktə düyməsinə bas.</p>'+d.cats.map(c=>`<div class="card"><div class="row"><input class="catn" data-cn="${c.id}" value="${esc(c.name)}"><button class="d" data-act="delcat" data-id="${c.id}">Kateqoriyanı sil</button></div>${d.items.filter(i=>i.category_id===c.id).map(row).join('')}<button style="margin-top:12px" data-act="additem" data-id="${c.id}">+ Məhsul əlavə et</button></div>`).join('')
-   +(loose.length?`<div class="card"><h2>Kateqoriyasız</h2>${loose.map(row).join('')}</div>`:'')+'<button class="p" data-act="addcat">+ Kateqoriya</button>';
+  return '<p class="muted" style="margin:0 0 12px">Sıranı ↑ ↓ düymələri ilə dəyişirsən: məsələn "Kombolar" kateqoriyasını ən yuxarı çıxar. Yeməyi müvəqqəti gizlətmək üçün sağdakı düyməni söndür.</p>'
+   +d.cats.map((c,ci)=>`<div class="card"><div class="row" style="flex-wrap:nowrap">${mvb('categories',c.id,ci===0,ci===d.cats.length-1)}<input class="catn" data-cn="${c.id}" value="${esc(c.name)}"><button class="d" data-act="delcat" data-id="${c.id}">Kateqoriyanı sil</button></div>${rows(d.items.filter(i=>i.category_id===c.id))}<button style="margin-top:12px" data-act="additem" data-id="${c.id}">+ Məhsul əlavə et</button></div>`).join('')
+   +(loose.length?`<div class="card"><h2>Kateqoriyasız</h2>${rows(loose)}</div>`:'')+'<button class="p" data-act="addcat">+ Kateqoriya</button>';
 },
 look:()=>{
   const t=S.rest.theme||{},a=S.p.role==='admin',cur=t.font||'',fl=FONTS.includes(cur)||!cur?FONTS:[...FONTS,cur];
@@ -309,6 +316,18 @@ function qrgo(read=true){
 }
 
 /* ---------- məhsul redaktə pəncərəsi ---------- */
+async function mv(t,id,dir){
+  const d=S.C[key('menu')];if(!d)return;
+  const arr=t==='items'?d.items:d.cats,x=arr.find(r=>r.id===id);if(!x)return;
+  const grp=(t==='items'?arr.filter(r=>r.category_id===x.category_id):arr.slice()).sort((a,b)=>(a.sort||0)-(b.sort||0));
+  const i=grp.findIndex(r=>r.id===id),j=i+dir;if(j<0||j>=grp.length)return;
+  [grp[i],grp[j]]=[grp[j],grp[i]];
+  grp.forEach((r,k)=>r.sort=k+1);
+  arr.sort((a,b)=>(a.sort||0)-(b.sort||0));
+  paint();
+  const res=await Promise.all(grp.map(r=>db.from(t).update({sort:r.sort}).eq('id',r.id)));
+  if(res.some(r=>r.error))toast('Sıralama saxlanılmadı',1);
+}
 function openEdit(id){
   const d=S.C[key('menu')],x=d?.items.find(i=>i.id===id);if(!x)return;
   $('#modal').innerHTML=`<div class="mb"><div class="mh"><h2>Məhsulu redaktə et</h2><button data-act="mclose">Bağla</button></div>
@@ -347,6 +366,7 @@ document.addEventListener('click',async e=>{
   if(a==='mclose'){$('#modal').hidden=true;return}
   if(a==='clr'){$('#f_'+id).value='';$('#pv_'+id).innerHTML='Yoxdur';if(S.tab==='look')pvUpdate();return}
   if(a==='st'){if(chk(await db.from('orders').update({status:b.dataset.v}).eq('id',id)))again();return}
+  if(a==='mv'){await mv(b.dataset.t,id,+b.dataset.d);return}
   if(a==='edit')return openEdit(id);
   if(a==='addcat'){const n=prompt('Kateqoriya adı');if(n&&chk(await db.from('categories').insert({restaurant_id:rid,name:n,sort:(S.C[key('menu')]?.cats.length||0)+1})))again();return}
   if(a==='delcat'){if(confirm('Kateqoriya silinsin? Məhsullar "Kateqoriyasız" bölməsinə düşəcək.')&&chk(await db.from('categories').delete().eq('id',id)))again();return}
