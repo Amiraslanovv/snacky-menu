@@ -55,6 +55,14 @@ h2{margin:0 0 6px;font-size:18px}
 .sw span{position:absolute;inset:0;background:#3a3d4a;border-radius:99px;transition:.2s}
 .sw span::after{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s}
 .sw input:checked+span{background:var(--ok)}.sw input:checked+span::after{transform:translateX(18px)}
+.kp.k4{grid-template-columns:repeat(4,1fr)}.kp.k4 b{font-size:24px}
+.c2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.up{color:var(--ok)}.dn{color:#ff8a80}
+.rep{white-space:pre-wrap;background:#0f1015;border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0 6px;font:14px/1.55 system-ui;color:var(--ink)}
+.hrs{display:flex;align-items:flex-end;gap:3px;height:120px;margin-top:10px}
+.hrs div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
+.hrs i{display:block;width:100%;background:linear-gradient(180deg,var(--acc2),var(--acc));border-radius:3px 3px 0 0}
+.hrs small{font-size:10px;height:14px}
 .kp{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
 .kp .card{margin:0}.kp b{font-size:30px;display:block}
 .bar{height:10px;border-radius:5px;background:linear-gradient(90deg,var(--acc),var(--acc2));min-width:2px}
@@ -114,7 +122,7 @@ code{display:block;white-space:pre-wrap;word-break:break-all;background:#0a0b0e;
  .app{grid-template-columns:1fr}
  .side{position:sticky;top:0;z-index:20;height:auto;flex-direction:row;padding:8px;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
  .brand,.out{display:none}.nav{flex-direction:row}.nav button{white-space:nowrap}
- main{padding:14px}.cols,.kp,.g2,.g3,.lk{grid-template-columns:1fr}.pvw{position:static}
+ main{padding:14px}.cols,.kp,.g2,.g3,.lk,.c2{grid-template-columns:1fr}.kp.k4{grid-template-columns:1fr 1fr}.pvw{position:static}
 }
 @media print{.side,.top,.noprint{display:none!important}body{background:#fff}.app{display:block}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
@@ -173,16 +181,24 @@ const F={
  menu:async id=>{const [c,i]=await Promise.all([db.from('categories').select('*').eq('restaurant_id',id).order('sort'),db.from('items').select('*').eq('restaurant_id',id).order('sort')]);return {cats:c.data||[],items:i.data||[]}},
  fb:async id=>{const [f,i]=await Promise.all([db.from('feedback').select('*').eq('restaurant_id',id).order('created_at',{ascending:false}).limit(50),db.from('items').select('id,name').eq('restaurant_id',id)]);const nm={};(i.data||[]).forEach(x=>nm[x.id]=x.name);return (f.data||[]).map(x=>({...x,item:nm[x.item_id]||''}))},
  stats:async id=>{
-  const since=new Date(Date.now()-14*864e5).toISOString();
-  const [e,o,i]=await Promise.all([db.from('events').select('type,item_id,created_at').eq('restaurant_id',id).gte('created_at',since).limit(5000),db.from('order_items').select('name,qty,orders!inner(restaurant_id,created_at)').eq('orders.restaurant_id',id).gte('orders.created_at',since).limit(2000),db.from('items').select('id,name').eq('restaurant_id',id)]);
-  const nm={};(i.data||[]).forEach(x=>nm[x.id]=x.name);
-  const days={};for(let k=13;k>=0;k--)days[new Date(Date.now()-k*864e5).toISOString().slice(0,10)]={scan:0,order:0};
-  const tot={scan:0,order:0,item_view:0},views={};
-  (e.data||[]).forEach(x=>{if(tot[x.type]!==undefined)tot[x.type]++;const d=days[x.created_at.slice(0,10)];if(d&&d[x.type]!==undefined)d[x.type]++;if(x.type==='item_view'&&x.item_id)views[x.item_id]=(views[x.item_id]||0)+1});
-  const top={};(o.data||[]).forEach(x=>top[x.name]=(top[x.name]||0)+x.qty);
+  const since=new Date(Date.now()-30*864e5).toISOString();
+  const [e,o,oi,i]=await Promise.all([
+   db.from('events').select('type,item_id,created_at').eq('restaurant_id',id).gte('created_at',since).limit(5000),
+   db.from('orders').select('created_at,total,status').eq('restaurant_id',id).neq('status','cancelled').gte('created_at',since).limit(5000),
+   db.from('order_items').select('name,qty,price,orders!inner(restaurant_id,created_at,status)').eq('orders.restaurant_id',id).neq('orders.status','cancelled').gte('orders.created_at',since).limit(5000),
+   db.from('items').select('id,name').eq('restaurant_id',id)]);
+  const loc=t=>new Date(t).toLocaleDateString('sv'),nm={};(i.data||[]).forEach(x=>nm[x.id]=x.name);
+  const days={};for(let k=29;k>=0;k--)days[loc(Date.now()-k*864e5)]={scan:0,order:0,rev:0};
+  const today=loc(Date.now()),yest=loc(Date.now()-864e5),w7s=loc(Date.now()-6*864e5),hours=Array(24).fill(0);
+  const tot={scan:0,item_view:0},views={};
+  (e.data||[]).forEach(x=>{if(x.type==='scan'){tot.scan++;const d=days[loc(x.created_at)];if(d)d.scan++}else if(x.type==='item_view'){tot.item_view++;if(x.item_id)views[x.item_id]=(views[x.item_id]||0)+1}});
+  const R={today:{r:0,c:0},yest:{r:0,c:0},w7:{r:0,c:0},m30:{r:0,c:0}};
+  (o.data||[]).forEach(x=>{const k=loc(x.created_at),t=+x.total||0,d=days[k];if(d){d.order++;d.rev+=t}R.m30.r+=t;R.m30.c++;if(k>=w7s){R.w7.r+=t;R.w7.c++}if(k===today){R.today.r+=t;R.today.c++}if(k===yest){R.yest.r+=t;R.yest.c++}hours[new Date(x.created_at).getHours()]++});
+  const tq={},tr={},td={};
+  (oi.data||[]).forEach(x=>{tq[x.name]=(tq[x.name]||0)+x.qty;tr[x.name]=(tr[x.name]||0)+x.qty*x.price;if(loc(x.orders.created_at)===today)td[x.name]=(td[x.name]||0)+x.qty});
   const vw={};Object.entries(views).forEach(([k,v])=>vw[nm[k]||'?']=v);
-  const srt=m=>Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  return {days,tot,top:srt(top),viewed:srt(vw)};
+  const srt=(m,n=6)=>Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  return {days,R,hours,tot,top:srt(tq),topRev:srt(tr).map(([n,v])=>[n,Math.round(v*100)/100]),topToday:srt(td,5),viewed:srt(vw)};
  }
 };
 async function go(tab,bg){
@@ -266,6 +282,13 @@ function pvUpdate(){
   el.style.background=bg;el.style.fontFamily="'"+fo+"',Georgia,serif";
   el.innerHTML=`<div class="pvh">${logo?`<img src="${esc(logo)}" style="height:${Math.round(ls*.6)}px" alt="">`:`<span style="color:${fl};font-size:36px;font-weight:700">${esc(S.rest.name)}</span>`}</div><div class="pvs" style="color:${gd}">Əsas yeməklər</div><div class="pvc"><div class="pvi" ${it?.image_url?`style="background-image:url('${esc(it.image_url)}')"`:''}></div><div class="pvr"><b style="font-family:system-ui">${esc(it?.name||'Nümunə yemək')}</b><span class="pvp" style="border-color:${gd};color:${gd}">${it?money(it.price):'6.50'}</span></div><span class="pva" style="background:${fl}">+</span></div>`;
 }
+function report(d){
+  const R=d.R,c=S.rest.currency,dt=new Date().toLocaleDateString('en-GB').replace(/\//g,'.'),mx=Math.max(...d.hours),pk=d.hours.indexOf(mx);
+  const dl=R.yest.r>0?`\nDünənə nisbətən: ${R.today.r>=R.yest.r?'+':''}${Math.round((R.today.r-R.yest.r)/R.yest.r*100)}%`:'';
+  return `${S.rest.name}, ${dt}, gün hesabatı\nGəlir: ${money(R.today.r)} ${c}\nSifariş sayı: ${R.today.c}\nOrta çek: ${money(R.today.c?R.today.r/R.today.c:0)} ${c}${dl}`
+   +(d.topToday.length?`\nBu gün ən çox satılan: ${d.topToday.map(([n,q])=>`${n} (${q})`).join(', ')}`:'')
+   +`\nSon 7 gün gəliri: ${money(R.w7.r)} ${c}`+(mx>0?`\nƏn yüklü saat (30 gün): ${pk}:00`:'');
+}
 function checklist(){
   const t=S.rest.theme||{},m=S.C[key('menu')],todo=[];
   if(!t.logo_url)todo.push(['Logonu yüklə','look']);
@@ -314,11 +337,16 @@ look:()=>{
 },
 stats:d=>{
   if(!d)return skel();
-  const e=Object.entries(d.days),mx=Math.max(1,...e.map(x=>x[1].scan));
-  const lst=(t,a)=>`<div class="card"><h2>${t}</h2>${a.map(([n,q])=>`<div class="row" style="padding:5px 0"><span>${esc(n)}</span><b>${q}</b></div>`).join('')||'<p class="muted">Hələ məlumat yoxdur.</p>'}</div>`;
-  return `<div class="kp"><div class="card"><small>Skan (14 gün)</small><b>${d.tot.scan}</b></div><div class="card"><small>Yeməyə baxış</small><b>${d.tot.item_view}</b></div><div class="card"><small>Sifariş</small><b>${d.tot.order}</b></div></div>
-  <div class="card"><h2>Gündəlik skan və sifariş</h2>${e.map(([k,v])=>`<div class="row" style="flex-wrap:nowrap;padding:3px 0"><small style="width:46px">${k.slice(5)}</small><div style="flex:1"><div class="bar" style="width:${v.scan/mx*100}%"></div></div><small style="width:110px;text-align:right">${v.scan} skan, ${v.order} sif.</small></div>`).join('')}</div>
-  <div class="cols" style="grid-template-columns:1fr 1fr">${lst('Ən çox sifariş edilən',d.top)}${lst('Ən çox baxılan',d.viewed)}</div>`;
+  const cur=esc(S.rest.currency),R=d.R,m=money,avg=R.today.c?R.today.r/R.today.c:0;
+  const dl=R.yest.r>0?`<small class="${R.today.r>=R.yest.r?'up':'dn'}">${R.today.r>=R.yest.r?'+':''}${Math.round((R.today.r-R.yest.r)/R.yest.r*100)}% dünənə nisbətən</small>`:'<small>&nbsp;</small>';
+  const e14=Object.entries(d.days).slice(-14),mxr=Math.max(1,...e14.map(x=>x[1].rev)),mxh=Math.max(1,...d.hours);
+  const lst=(t,a,f)=>`<div class="card"><h2>${t}</h2>${a.map(([n,q])=>`<div class="row" style="padding:5px 0"><span>${esc(n)}</span><b>${f?f(q):q}</b></div>`).join('')||'<p class="muted">Hələ məlumat yoxdur.</p>'}</div>`;
+  return `<div class="kp k4"><div class="card"><small>Bugünkü gəlir</small><b>${m(R.today.r)} ${cur}</b>${dl}</div><div class="card"><small>Bugünkü sifariş</small><b>${R.today.c}</b><small>&nbsp;</small></div><div class="card"><small>Orta çek (bu gün)</small><b>${m(avg)} ${cur}</b><small>&nbsp;</small></div><div class="card"><small>Son 7 gün gəliri</small><b>${m(R.w7.r)} ${cur}</b><small>${R.w7.c} sifariş</small></div></div>
+  <div class="card"><div class="row"><h2>Gün sonu hesabatı</h2><span><button class="p" data-act="wa">WhatsApp-da göndər</button> <button data-act="cpy">Kopyala</button></span></div><pre class="rep">${esc(report(d))}</pre><small class="muted">Gəlir ləğv olunmayan sifarişlərin cəmidir.</small></div>
+  <div class="card"><h2>Gündəlik gəlir (son 14 gün)</h2>${e14.map(([k,v])=>`<div class="row" style="flex-wrap:nowrap;padding:3px 0"><small style="width:46px">${k.slice(5)}</small><div style="flex:1"><div class="bar" style="width:${v.rev/mxr*100}%"></div></div><small style="width:140px;text-align:right">${m(v.rev)} ${cur}, ${v.order} sif.</small></div>`).join('')}</div>
+  <div class="card"><h2>Saat üzrə sifarişlər (son 30 gün)</h2><div class="hrs">${d.hours.map((c,h)=>`<div title="${h}:00, ${c} sifariş"><i style="height:${Math.max(2,c/mxh*100)}%"></i><small>${h%3===0?h:''}</small></div>`).join('')}</div></div>
+  <div class="c2">${lst('Ən çox satılan (30 gün, ədəd)',d.top)}${lst('Ən çox gəlir gətirən (30 gün)',d.topRev,v=>m(v)+' '+cur)}</div>
+  <div class="c2" style="margin-top:14px">${lst('Ən çox baxılan',d.viewed)}<div class="card"><h2>Menyuya giriş (30 gün)</h2><b style="font-size:30px">${d.tot.scan}</b> <small>skan</small><br><b style="font-size:30px">${d.tot.item_view}</b> <small>yeməyə baxış</small></div></div>`;
 },
 fb:d=>{
   if(!d)return skel();
@@ -389,6 +417,8 @@ document.addEventListener('click',async e=>{
   if(a==='st'){if(chk(await db.from('orders').update({status:b.dataset.v}).eq('id',id)))again();return}
   if(a==='bdt'){const n=b.dataset.b,i=BD.indexOf(n);if(i<0)BD.push(n);else BD.splice(i,1);bdPaint();return}
   if(a==='bdc'){BD=[];bdPaint();return}
+  if(a==='wa'){window.open('https://wa.me/?text='+encodeURIComponent(report(S.C[key('stats')])),'_blank');return}
+  if(a==='cpy'){try{await navigator.clipboard.writeText(report(S.C[key('stats')]));toast('Kopyalandı')}catch(e){toast('Kopyalanmadı',1)}return}
   if(a==='mv'){await mv(b.dataset.t,id,+b.dataset.d);return}
   if(a==='edit')return openEdit(id);
   if(a==='addcat'){const n=prompt('Kateqoriya adı');if(n&&chk(await db.from('categories').insert({restaurant_id:rid,name:n,sort:(S.C[key('menu')]?.cats.length||0)+1})))again();return}
