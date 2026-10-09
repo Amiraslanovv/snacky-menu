@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Menyu</title>
-<link href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Outfit:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Outfit:wght@400;500;600;700&display=swap"></noscript>
 <style>
 :root{--bg:#15161c;--card:#1f212a;--ink:#f4ead8;--muted:#a9a190;--gold:#e9b45f;--flame:#f2661f;--flame2:#ff9c3d;--kraft:#b98a5a;--line:#2e303b;--display:'Almendra',Georgia,serif;--body:'Outfit',system-ui,sans-serif;color-scheme:dark}
 *,*::before,*::after{box-sizing:border-box}
@@ -25,6 +27,7 @@ section h2{font-family:var(--display);font-size:30px;color:var(--gold);margin:26
 .ph span{font-family:var(--display);font-size:clamp(20px,6vw,30px);color:var(--gold);opacity:.4}
 .cp{padding:10px 12px 12px}
 .cp h3{margin:0;font-size:16px;font-weight:600;padding-right:72px}
+.hasd .cp h3{padding-right:104px}
 .cp small{color:var(--muted)}
 .pr{display:grid;place-items:center;min-width:54px;height:54px;padding:0 6px;border-radius:50%;background:#101116;border:2px solid var(--gold);color:var(--gold);font-weight:700;font-size:15px;line-height:1}
 .card .pr{position:absolute;right:8px;bottom:8px}
@@ -157,7 +160,7 @@ const BADGE_COL={'Yeni':'#1fb36b','Sevilən':'#e5486c','Şefin seçimi':'#8a5cf5
 const bdg=b=>`<span class="rb" style="background:${BADGE_COL[b]||'var(--gold)'}">${esc(b)}</span>`;
 const badgesOf=x=>[...(x.badges||[]),...(TOP.includes(x.id)?['Ən çox sifariş edilən']:[])].slice(0,2).map(bdg).join('');
 const priceBig=x=>{const d=disc(x);return `<span class="pr big${d?' dc':''}">${d?`<s>${money(d.o)}</s>`:''}${money(+x.price)} ${esc(R.currency)}</span>`};
-const card=x=>{const d=disc(x);return `<article class="card" data-open="${x.id}"><div class="img">${art(x)}${d?`<span class="sale">−${d.pct}%</span>`:''}</div>${qtyDiv(x.id)}<div class="rbs">${badgesOf(x)}</div><div class="cp"><h3>${esc(x.name)}</h3><small>${esc(x.weight||'')}</small></div>${d?`<div class="pr dc"><s>${money(d.o)}</s><b>${money(d.p)}<i class="cu">${esc(R.currency)}</i></b></div>`:`<div class="pr"><b>${money(+x.price)}</b><i class="cu">${esc(R.currency)}</i></div>`}</article>`};
+const card=x=>{const d=disc(x);return `<article class="card${d?' hasd':''}" data-open="${x.id}"><div class="img">${art(x)}${d?`<span class="sale">−${d.pct}%</span>`:''}</div>${qtyDiv(x.id)}<div class="rbs">${badgesOf(x)}</div><div class="cp"><h3>${esc(x.name)}</h3><small>${esc(x.weight||'')}</small></div>${d?`<div class="pr dc"><s>${money(d.o)}</s><b>${money(d.p)}<i class="cu">${esc(R.currency)}</i></b></div>`:`<div class="pr"><b>${money(+x.price)}</b><i class="cu">${esc(R.currency)}</i></div>`}</article>`};
 function render(){
   const known=new Set(CATS.map(c=>c.id));
   const groups=CATS.map(c=>({n:c.name,note:c.note,its:ITEMS.filter(x=>x.category_id===c.id)}));
