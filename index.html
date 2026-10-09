@@ -3,135 +3,189 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3ead8">
 <title>menyum.me, restoranlar üçün QR menyu</title>
-<meta name="description" content="Restoran və kafelər üçün QR menyu: müştəri masadan skan edir, menyuya baxır və sifariş verir. Siz sifarişləri canlı görürsünüz.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23ff7a2f%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M18%2013v14M24%2013v14M30%2013v14%22%2F%3E%3Cpath%20d%3D%22M18%2027q0%208%206%208t6-8%22%2F%3E%3Cpath%20d%3D%22M24%2035v17%22%2F%3E%3Cpath%20d%3D%22M42%2033v19%22%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%22M42%2012c7%202%209%2010%207%2021H42z%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E">
+<meta name="description" content="Masada QR kod, telefonda menyu, mətbəxdə sifariş. Restoran və kafelər üçün QR menyu və masadan sifariş.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23c63d21%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M18%2013v14M24%2013v14M30%2013v14%22%2F%3E%3Cpath%20d%3D%22M18%2027q0%208%206%208t6-8%22%2F%3E%3Cpath%20d%3D%22M24%2035v17%22%2F%3E%3Cpath%20d%3D%22M42%2033v19%22%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%22M42%2012c7%202%209%2010%207%2021H42z%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"></noscript>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:ital,wght@0,600;0,800;1,600&family=Outfit:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:ital,wght@0,600;0,800;1,600&family=Outfit:wght@400;500;600&display=swap"></noscript>
 <style>
-:root{--bg:#0d0e12;--card:#15171e;--ink:#f3efe6;--muted:#9a9ca6;--a:#ff7a2f;--a2:#ffb86b;--line:#262a35;color-scheme:dark}
+:root{--paper:#f3ead8;--card:#fbf5e6;--ink:#201a13;--muted:#6b5f50;--red:#c63d21;--mustard:#f0b429;--serif:'Noto Serif Display','Noto Serif',Georgia,'Times New Roman',serif;--sans:'Outfit',system-ui,sans-serif}
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:'Outfit',system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(900px 520px at 80% -120px,rgba(255,122,47,.28),transparent 70%),radial-gradient(700px 500px at 5% 40%,rgba(255,255,255,.04),transparent 70%),radial-gradient(800px 500px at 60% 110%,rgba(255,184,107,.1),transparent 70%)}
-.w{max-width:1080px;margin:0 auto;padding:0 20px}
-header{display:flex;justify-content:space-between;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 20px) 0}
-.logo{font-weight:800;font-size:24px;letter-spacing:-.02em;text-decoration:none;color:var(--ink)}
-.logo b{background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
-nav a{color:var(--muted);text-decoration:none;margin-left:22px;font-weight:500}
-nav a:hover{color:var(--ink)}
-.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:48px 0 72px}
-h1{font-size:clamp(34px,5.6vw,60px);line-height:1.06;letter-spacing:-.03em;margin:0 0 18px;font-weight:800}
-h1 em{font-style:normal;background:linear-gradient(135deg,var(--a),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.lead{color:#c9c7c0;font-size:18px;max-width:520px;margin:0 0 28px}
-.btns{display:flex;gap:12px;flex-wrap:wrap}
-.btn{display:inline-block;padding:14px 26px;border-radius:14px;font:600 16px 'Outfit',system-ui,sans-serif;text-decoration:none;border:1px solid var(--line);color:var(--ink);transition:transform .15s}
-.btn:hover{transform:translateY(-2px)}
-.btn.p{background:linear-gradient(135deg,var(--a),var(--a2));color:#1a1005;border:0}
-.phone{position:relative;width:min(300px,78vw);margin:0 auto;aspect-ratio:9/17;border-radius:36px;border:8px solid #23262f;background:#101116;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 80px rgba(255,122,47,.18);overflow:hidden;padding:18px 14px}
-.phone .pn{font-weight:800;font-size:22px;text-align:center;margin-bottom:12px;color:var(--a)}
-.phone .pc{background:#1b1d26;border-radius:14px;overflow:hidden;margin-bottom:10px;position:relative}
-.phone .pc img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}
-.phone .pc div{padding:8px 10px;font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center}
-.phone .pc span{border:2px solid var(--a2);color:var(--a2);border-radius:99px;padding:2px 10px;font-size:13px}
-section{padding:30px 0 56px}
-h2{font-size:clamp(26px,3.6vw,38px);letter-spacing:-.02em;margin:0 0 8px}
-.sub{color:var(--muted);margin:0 0 28px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
-.card h3{margin:0 0 6px;font-size:18px}
-.card p{margin:0;color:var(--muted);font-size:15px}
-.num{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--a2));color:#1a1005;font-weight:800;margin-bottom:12px}
-.rc{display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-height:150px;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;transition:transform .15s,border-color .15s}
-.rc:hover{transform:translateY(-3px);border-color:var(--c,var(--a))}
-.rc .rn{font-size:26px;font-weight:800;color:var(--c,var(--a));letter-spacing:-.02em}
-.rc img{max-height:54px;max-width:80%;object-fit:contain;object-position:left}
-.rc small{color:var(--muted);font-weight:500;font-size:15px}
-.cta{background:linear-gradient(135deg,rgba(255,122,47,.18),rgba(255,184,107,.08));border:1px solid rgba(255,122,47,.35);border-radius:24px;padding:40px 24px;text-align:center}
-.cta p{color:#c9c7c0;margin:0 0 22px}
-footer{color:var(--muted);text-align:center;font-size:14px;padding:36px 0 calc(env(safe-area-inset-bottom,0px) + 36px)}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 var(--sans);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .2 0 0 0 0 .15 0 0 0 0 .1 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23g%29'/%3E%3C/svg%3E")}
+a{color:inherit}
+.w{max-width:1040px;margin:0 auto;padding:0 22px}
+header{display:flex;justify-content:space-between;align-items:baseline;padding:calc(env(safe-area-inset-top,0px) + 22px) 0 6px}
+.logo{font:800 26px var(--serif);text-decoration:none;letter-spacing:-.01em}
+.logo i{color:var(--red);font-style:italic;font-weight:600}
+nav a{margin-left:22px;font-weight:500;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:5px;text-decoration-color:var(--mustard)}
+.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:center;padding:54px 0 70px}
+h1{font:800 clamp(38px,6.4vw,70px)/1.04 var(--serif);letter-spacing:-.02em;margin:0 0 22px}
+mark{color:inherit;background:linear-gradient(transparent 58%,var(--mustard) 58%);padding:0 .06em}
+.fast{font:600 clamp(20px,2.6vw,26px)/1.35 var(--serif);font-style:italic;margin:0 0 16px}
+.lead{max-width:470px;color:var(--muted);margin:0 0 30px}
+.btn{display:inline-block;background:var(--red);color:#fff;padding:14px 26px;border-radius:5px;font:600 17px var(--sans);text-decoration:none;box-shadow:4px 4px 0 var(--ink);transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.lnk{margin-left:18px;font-weight:500;text-underline-offset:5px;text-decoration-thickness:2px;text-decoration-color:var(--mustard)}
+.stage{position:relative}
+.tent{position:relative;width:min(300px,80vw);margin:0 auto;background:#fffdf6;border:1.5px solid var(--ink);border-radius:5px;padding:30px 22px 18px;transform:rotate(2.4deg);box-shadow:9px 11px 0 rgba(32,26,19,.13);text-align:center}
+.tent::before{content:'';position:absolute;top:-15px;left:50%;width:100px;height:30px;margin-left:-50px;background:rgba(240,180,41,.78);transform:rotate(-4deg)}
+.tent .note{font:italic 600 21px/1.2 var(--serif);margin:0 0 14px}
+#qr{width:176px;height:176px;margin:0 auto}
+#qr img,#qr canvas{display:block;margin:0 auto}
+.tent .url{margin:14px 0 0;padding-top:12px;border-top:2px dashed rgba(32,26,19,.35);font:500 14px/1.3 ui-monospace,Consolas,monospace;color:var(--muted)}
+.arrow{position:absolute;left:-58px;top:-4px;width:96px;height:auto;fill:none;stroke:var(--ink);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;transform:rotate(-6deg)}
+.say{position:absolute;left:-84px;top:-34px;font:italic 600 18px var(--serif);transform:rotate(-7deg);white-space:nowrap}
+section{padding:26px 0 54px}
+h2{font:800 clamp(28px,4vw,42px)/1.1 var(--serif);letter-spacing:-.015em;margin:0 0 6px}
+.sub{color:var(--muted);margin:0 0 30px}
+.mcard{background:var(--card);border:1.5px solid var(--ink);outline:1.5px solid var(--ink);outline-offset:-9px;padding:46px clamp(24px,5vw,60px) 40px}
+.mcard h2{text-align:center;font-style:italic;font-weight:600;margin-bottom:30px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px 56px}
+.cols h3{margin:0 0 10px;font:800 19px var(--serif);color:var(--red)}
+.mi{display:flex;align-items:baseline;gap:8px;padding:6px 0}
+.mi b{font-weight:600}
+.mi i{flex:1;border-bottom:2px dotted rgba(32,26,19,.4);transform:translateY(-4px);min-width:14px}
+.mi em{color:var(--muted);font-size:15px;text-align:right}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font:600 clamp(20px,3vw,28px)/1.3 var(--serif);margin:0}
+.flow svg{width:42px;fill:none;stroke:var(--red);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.tickets{display:flex;flex-wrap:wrap;gap:20px 22px;padding:6px 0}
+.tk{display:block;min-width:190px;text-decoration:none;background:#fffdf6;border:1.5px solid var(--ink);border-left:9px solid var(--c,var(--red));border-radius:4px;padding:16px 20px 14px;box-shadow:5px 6px 0 rgba(32,26,19,.12);transition:transform .15s}
+.tk:hover{transform:translateY(-4px) rotate(0)!important}
+.tk strong{display:block;font:800 25px/1.15 var(--serif)}
+.tk img{max-height:44px;max-width:170px;object-fit:contain;display:block}
+.tk small{color:var(--muted);font-size:14px}
+.say2{font:italic 600 clamp(24px,3.6vw,36px)/1.25 var(--serif);max-width:720px;margin:0 0 22px}
+.say2 a{text-underline-offset:6px;text-decoration-thickness:3px;text-decoration-color:var(--mustard)}
+.ct{display:flex;flex-wrap:wrap;gap:12px}
+footer{border-top:1.5px solid var(--ink);margin-top:20px;padding:22px 0 calc(env(safe-area-inset-bottom,0px) + 34px);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:15px}
+footer em{font-family:var(--serif)}
 [hidden]{display:none!important}
-@media (max-width:820px){.hero{grid-template-columns:1fr;padding:24px 0 48px}nav a{margin-left:14px}.phone{margin-top:8px}}
+@media (max-width:860px){
+ .hero{grid-template-columns:1fr;padding:30px 0 50px}
+ .arrow,.say{display:none}
+ .cols{grid-template-columns:1fr;gap:26px}
+ .tent{margin-top:14px}
+ nav a{margin-left:14px}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
 </style>
 </head>
 <body>
 <div class="w">
-  <header><a class="logo" href="/">menyum<b>.me</b></a><nav><a href="#restoranlar">Restoranlar</a><a href="#imkanlar">İmkanlar</a><a href="#elaqe" id="navc" hidden>Əlaqə</a></nav></header>
+  <header><a class="logo" href="/">menyum<i>.me</i></a><nav><a href="#restoranlar" id="nr" hidden>Restoranlar</a><a href="#elaqe" id="nc" hidden>Əlaqə</a></nav></header>
 
   <div class="hero">
     <div>
-      <h1>Restoranınız üçün <em>QR menyu</em> və masadan sifariş</h1>
-      <p class="lead">Müştəri masadakı QR kodu skan edir, menyuya baxır və birbaşa sifariş verir. Siz sifarişləri canlı görürsünüz, gün sonu hesabatını alırsınız.</p>
-      <div class="btns"><a class="btn p" href="#restoranlar">Nümunələrə bax</a><a class="btn" href="#elaqe" id="herob" hidden>Əlaqə saxla</a></div>
+      <h1>Kağız menyunu <mark>bir kənara</mark> qoy.</h1>
+      <p class="fast">Masada QR kod. Telefonda menyu. Mətbəxdə sifariş.</p>
+      <p class="lead">Hər restoran öz rəngində, öz şəkilləri və öz sözləri ilə görünür. Siz isə sifarişləri, gəliri və müştəri rəylərini bir paneldə izləyirsiniz.</p>
+      <a class="btn" id="demo" href="/snacky">Canlı nümunəyə bax</a><a class="lnk" id="hc" href="#elaqe" hidden>Siz də istəyirsiniz? Yazın</a>
     </div>
-    <div class="phone" aria-hidden="true">
-      <div class="pn">Snacky</div>
-      <div class="pc"><img src="/img/chicken-snacky.jpg" alt=""><div>Chicken Snacky<span>6.50 ₼</span></div></div>
-      <div class="pc"><img src="/img/kumpir-snacky.jpg" alt=""><div>Kumpir Snacky<span>7.40 ₼</span></div></div>
+    <div class="stage">
+      <span class="say" aria-hidden="true">bunu skan et</span>
+      <svg class="arrow" viewBox="0 0 100 70" aria-hidden="true"><path d="M6 8C28 52 58 62 90 46"/><path d="M76 36l15 10-17 10"/></svg>
+      <div class="tent">
+        <p class="note">Skan et. Bu, həqiqi menyudur.</p>
+        <div id="qr"></div>
+        <p class="url">menyum.me/<span id="qs">snacky</span></p>
+      </div>
     </div>
   </div>
 
-  <section id="restoranlar" hidden>
-    <h2>Menyumuzdan istifadə edən restoranlar</h2>
-    <p class="sub">Birinə toxun, canlı menyunu gör.</p>
-    <div class="grid" id="list"></div>
+  <section>
+    <div class="mcard">
+      <h2>Bizdə nə var</h2>
+      <div class="cols">
+        <div>
+          <h3>Qonaq üçün</h3>
+          <div class="mi"><b>Şəkilli menyu</b><i></i><em>telefonda, yükləmədən</em></div>
+          <div class="mi"><b>Sayı yazıb sifariş</b><i></i><em>masa nömrəsi ilə</em></div>
+          <div class="mi"><b>Endirim və kombo</b><i></i><em>rəngli nişanlarla</em></div>
+          <div class="mi"><b>Tərkibi görmək</b><i></i><em>şəkil və ya animasiya</em></div>
+        </div>
+        <div>
+          <h3>Restoran üçün</h3>
+          <div class="mi"><b>Canlı sifariş paneli</b><i></i><em>səs bildirişi ilə</em></div>
+          <div class="mi"><b>Menyunu özünüz dəyişirsiniz</b><i></i><em>qiymət, şəkil, sıra</em></div>
+          <div class="mi"><b>Gündəlik gəlir</b><i></i><em>gün sonu hesabatı</em></div>
+          <div class="mi"><b>Müştəri rəyləri</b><i></i><em>birbaşa panelə</em></div>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <section id="imkanlar">
-    <h2>Nələr təklif edirik</h2>
-    <p class="sub">Hər restoran üçün ayrıca hazırlanan, rahat idarə olunan menyu.</p>
-    <div class="grid">
-      <div class="card"><h3>Hər masa üçün QR kod</h3><p>Müştəri skan edir, quraşdırma və yükləmə olmadan telefonda açılır.</p></div>
-      <div class="card"><h3>Masadan sifariş</h3><p>Yemək seçilir, say yazılır, sifariş mətbəxə birbaşa gedir.</p></div>
-      <div class="card"><h3>Canlı sifariş paneli</h3><p>Yeni sifariş səs bildirişi ilə gəlir, status bir toxunuşla dəyişir.</p></div>
-      <div class="card"><h3>Statistika və hesabat</h3><p>Gündəlik gəlir, ən çox satılan yeməklər, ən yüklü saatlar və gün sonu hesabatı.</p></div>
-      <div class="card"><h3>Restoranınıza uyğun dizayn</h3><p>Logo, rəng, şrift, yemək şəkilləri və tərkib animasiyası restoranın üslubuna uyğun qurulur.</p></div>
-      <div class="card"><h3>Endirim, kombo, nişanlar</h3><p>Yeni, sevilən, kombo nişanları, endirim stikerləri və ən çox sifariş edilən yeməklər.</p></div>
-    </div>
+  <section id="restoranlar" hidden>
+    <h2>Artıq bizimlə</h2>
+    <p class="sub">Birinə toxun, həqiqi menyunu aç.</p>
+    <div class="tickets" id="list"></div>
   </section>
 
   <section>
-    <h2>Necə işləyir</h2>
-    <p class="sub">Müştəri üçün üç addım.</p>
-    <div class="grid">
-      <div class="card"><div class="num">1</div><h3>Skan edir</h3><p>Masadakı QR kodu telefonun kamerası ilə oxudur.</p></div>
-      <div class="card"><div class="num">2</div><h3>Seçir</h3><p>Şəkilli menyuya baxır, yeməkləri və sayı seçir.</p></div>
-      <div class="card"><div class="num">3</div><h3>Sifariş verir</h3><p>Sifariş restoranın panelinə dərhal çatır.</p></div>
-    </div>
+    <h2>Qonaq nə görür</h2>
+    <p class="sub">Bütün yol belədir.</p>
+    <p class="flow"><span>Skan edir</span><svg viewBox="0 0 44 20"><path d="M2 12c10-8 22-8 36-1"/><path d="M30 5l9 6-9 6"/></svg><span>seçir, sayı yazır</span><svg viewBox="0 0 44 20"><path d="M2 12c10-8 22-8 36-1"/><path d="M30 5l9 6-9 6"/></svg><span>sifariş mətbəxə düşür.</span></p>
   </section>
+
 
   <section id="elaqe" hidden>
-    <div class="cta">
-      <h2>Restoranınız üçün menyu hazırlayaq</h2>
-      <p>Yazın, restoranınıza uyğun menyunu birlikdə quraq.</p>
-      <div class="btns" id="cbtns" style="justify-content:center"></div>
-    </div>
+    <p class="say2">Sizin restoran da bu siyahıda ola bilər. <a href="#elaqe">Yazın</a>, menyunu birlikdə quraq.</p>
+    <div class="ct" id="contact" data-whatsapp="+994998171706" data-instagram="Amiraslanovvf" data-email="amil.amiraslanov@yahoo.com"></div>
   </section>
 
-  <footer>menyum.me</footer>
+  <footer><span>© 2026 menyum.me</span><em>Kağız menyu heç vaxt sifariş qəbul etməyib.</em></footer>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script>
-const CONTACT={whatsapp:'',instagram:'',email:''};
 const SB_URL="https://qybeegkeowpdkdmzoryj.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5YmVlZ2tlb3dwZGtkbXpvcnlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMDk5NjYsImV4cCI6MjEwNjg4NTk2Nn0.MQ5iDWLxUXiKy3qbzAh6AbdxXeJyTfRVQ1hkYOw7n5o";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const links=[];
-if(CONTACT.whatsapp)links.push(['WhatsApp','https://wa.me/+994998171706'+CONTACT.whatsapp.replace(/\D/g,'')]);
-if(CONTACT.instagram)links.push(['Instagram','https://instagram.com/Amiraslanovvf'+CONTACT.instagram.replace('@','')]);
-if(CONTACT.email)links.push(['E-poçt','mailto:amil.amiraslanov@yahoo.com'+CONTACT.email]);
-if(links.length){
-  $('elaqe').hidden=false;$('navc').hidden=false;$('herob').hidden=false;
-  $('cbtns').innerHTML=links.map(([n,h],i)=>`<a class="btn${i?'':' p'}" href="${esc(h)}" target="_blank" rel="noopener">${n}</a>`).join('');
+
+(()=>{
+  const d=$('contact').dataset,L=[];
+  const wa=(d.whatsapp||'').replace(/\D/g,''),ig=(d.instagram||'').trim().replace(/^@/,''),em=(d.email||'').trim();
+  if(wa)L.push(['WhatsApp','https://wa.me/'+wa]);
+  if(ig)L.push(['Instagram','https://instagram.com/'+ig]);
+  if(em)L.push(['E-poçt','mailto:'+em]);
+  if(!L.length)return;
+  $('contact').innerHTML=L.map(([n,h],i)=>`<a class="btn" style="${i?'background:#fffdf6;color:var(--ink)':''}" href="${esc(h)}" target="_blank" rel="noopener">${n}</a>`).join('');
+  $('elaqe').hidden=false;$('nc').hidden=false;$('hc').hidden=false;
+})();
+
+(async()=>{
+  try{
+    await document.fonts.ready;
+    await document.fonts.load('800 40px "Noto Serif Display"','Əə');
+    const c=document.createElement('canvas').getContext('2d'),m=f=>{c.font='800 40px "Noto Serif Display",'+f;return c.measureText('Əə').width},w=[m('monospace'),m('serif'),m('sans-serif')];
+    if(Math.max(...w)-Math.min(...w)>=.5)document.documentElement.style.setProperty('--serif',"'Outfit',system-ui,sans-serif");
+  }catch(e){}
+})();
+
+/* QR: həqiqi*/
+let slug='snacky';
+function drawQr(){
+  const box=$('qr');box.innerHTML='';$('qs').textContent=slug;$('demo').href='/'+slug;
+  if(typeof QRCode==='undefined'){box.innerHTML='<a href="/'+slug+'">menyum.me/'+esc(slug)+'</a>';return}
+  new QRCode(box,{text:location.origin+'/'+slug,width:176,height:176,colorDark:'#201a13',colorLight:'#fffdf6',correctLevel:QRCode.CorrectLevel.M});
 }
+
+/* Restoranlar siyahısı:)*/
+const rot=[-1.8,1.4,-.9,2,-1.3,.9];
 fetch(SB_URL+'/rest/v1/restaurants?active=eq.true&select=slug,name,theme&order=created_at',{headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY}})
  .then(r=>r.json()).then(a=>{
   const l=(Array.isArray(a)?a:[]).filter(r=>!(r.theme&&r.theme.unlisted));
   if(!l.length)return;
-  $('restoranlar').hidden=false;
-  $('list').innerHTML=l.map(r=>{const t=r.theme||{};return `<a class="rc" href="/${encodeURIComponent(r.slug)}" style="--c:${/^#[0-9a-f]{3,8}$/i.test(t.flame||'')?t.flame:'#ff7a2f'}">${t.logo_url?`<img src="${esc(t.logo_url)}" alt="${esc(r.name)}">`:`<div class="rn">${esc(r.name)}</div>`}<small>Menyuya bax →</small></a>`}).join('');
- }).catch(()=>{});
+  slug=l[0].slug;
+  $('restoranlar').hidden=false;$('nr').hidden=false;
+  $('list').innerHTML=l.map((r,i)=>{const t=r.theme||{},c=/^#[0-9a-f]{3,8}$/i.test(t.flame||'')?t.flame:'#c63d21';
+    return `<a class="tk" href="/${encodeURIComponent(r.slug)}" style="--c:${c};transform:rotate(${rot[i%rot.length]}deg)">${t.logo_url?`<img src="${esc(t.logo_url)}" alt="${esc(r.name)}">`:`<strong>${esc(r.name)}</strong>`}<small>menyuya bax →</small></a>`}).join('');
+ }).catch(()=>{}).finally(()=>{
+   if(document.readyState==='complete')drawQr();else window.addEventListener('load',drawQr);
+ });
 </script>
 </body>
 </html>
