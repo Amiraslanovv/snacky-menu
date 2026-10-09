@@ -1,6 +1,6 @@
 {
   "rewrites": [
     { "source": "/panel", "destination": "/panel.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/(.+)", "destination": "/menu.html" }
   ]
 }

@@ -335,7 +335,8 @@ look:()=>{
   <div class="card"><h2>Sekmə ikonu</h2><p class="muted" style="margin:0">Brauzer sekməsində görünən kiçik şəkil. İstəsən öz ikonunu yüklə (kvadrat şəkil yaxşıdır, avtomatik ortadan kəsilir). Yükləməsən, restoranın əsas rəngində standart ikon qalır.</p>${mediaBox('fav','İkon',t.favicon_url)}</div>
   <div class="card"><h2>Fon şəkli (istəyə bağlı)</h2><p class="muted" style="margin:0">Boş qoysan standart tünd fon qalır.</p>${mediaBox('bgimg','Fon şəkli',t.bg_image)}</div>
   <div class="card"><h2>Sifariş</h2><label class="chk"><span class="sw"><input type="checkbox" id="f_oe" ${S.rest.orders_enabled?'checked':''}><span></span></span> Müştərilər menyudan sifariş verə bilsin</label><small>Söndürsən, menyuda yalnız yeməklərə baxmaq olar, səbət və sifariş düyməsi görünmür.</small></div>
-  ${a?`<div class="card"><h2>Admin ayarları</h2><div class="g2"><label>Restoran adı<input id="f_nm" value="${esc(S.rest.name)}"></label><label>Dizayn açarı (theme_key)<input id="f_tk" value="${esc(S.rest.theme_key)}"></label></div></div>`:''}
+  ${a?`<div class="card"><h2>Admin ayarları</h2><div class="g2"><label>Restoran adı<input id="f_nm" value="${esc(S.rest.name)}"></label><label>Dizayn açarı (theme_key)<input id="f_tk" value="${esc(S.rest.theme_key)}"></label></div>
+  <label class="chk"><span class="sw"><input type="checkbox" id="f_lst" ${t.unlisted?'':'checked'}><span></span></span> menyum.me ana səhifəsində göstər</label></div>`:''}
   <div class="mf"><span></span><button class="p" data-act="savelook">Dəyişiklikləri saxla</button></div></div>
   <div class="pvw"><b class="muted">Canlı baxış</b><div id="pvw"></div><small class="muted">Təxmini görünüşdür. Saxlayandan sonra "Menyuya bax" ilə həqiqisini yoxla.</small></div></div>`;
 },
@@ -436,7 +437,7 @@ document.addEventListener('click',async e=>{
   if(a==='delitem'){if(confirm('Məhsul silinsin?')&&chk(await db.from('items').delete().eq('id',id))){$('#modal').hidden=true;again('menu')}return}
   if(a==='preset'){const q=b.dataset.p.split('|');$('#f_flame').value=q[1];$('#f_gold').value=q[2];$('#f_bg').value=q[3];$('#f_kraft').value=q[4];let fo=q[5];if(fo&&!(await fontOK(fo))){fo='';toast('Bu üslubun şrifti Azərbaycan hərflərini dəstəkləmir, standart şrift qoyuldu',1)}$('#f_font').value=fo;pvUpdate();return}
   if(a==='savelook'){
-    const th={...(S.rest.theme||{}),flame:v('flame'),gold:v('gold'),bg:v('bg'),kraft:v('kraft')||undefined,font:v('font').trim()||undefined,logo_url:v('logo')||undefined,logo_size:(+v('lsize')&&+v('lsize')!==100)?+v('lsize'):undefined,bg_image:v('bgimg')||undefined,favicon_url:v('fav')||undefined};
+    const th={...(S.rest.theme||{}),flame:v('flame'),gold:v('gold'),bg:v('bg'),kraft:v('kraft')||undefined,font:v('font').trim()||undefined,logo_url:v('logo')||undefined,logo_size:(+v('lsize')&&+v('lsize')!==100)?+v('lsize'):undefined,bg_image:v('bgimg')||undefined,favicon_url:v('fav')||undefined,unlisted:$('#f_lst')?($('#f_lst').checked?undefined:true):(S.rest.theme||{}).unlisted};
     const o={theme:JSON.parse(JSON.stringify(th)),orders_enabled:$('#f_oe').checked};
     if(S.p.role==='admin'){o.theme_key=v('tk').trim()||'default';o.name=v('nm').trim()||S.rest.name}
     if(chk(await db.from('restaurants').update(o).eq('id',rid))){Object.assign(S.rest,o);topbar();toast('Saxlanıldı')}return}
@@ -445,6 +446,7 @@ document.addEventListener('click',async e=>{
   if(a==='addrest'){
     const slug=$('#ns').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-'),name=$('#nn').value.trim();
     if(!slug||!name)return toast('Link adı və ad lazımdır',1);
+    if(['panel','admin','img','menu','home','api','login','index','assets','static','menyum'].includes(slug))return toast('Bu link adı sistem üçün ayrılıb, başqa ad seç',1);
     if(chk(await db.from('restaurants').insert({slug,name}))){S.rests=(await db.from('restaurants').select('*').order('created_at')).data;if(!S.rest)S.rest=S.rests[0];topbar();paint()}return}
   if(a==='pickr'){S.rest=S.rests.find(r=>r.id===id);topbar();go('menu');return}
   if(a==='toggle'){const r=S.rests.find(x=>x.id===id);if(chk(await db.from('restaurants').update({active:!r.active}).eq('id',id))){r.active=!r.active;paint()}return}
