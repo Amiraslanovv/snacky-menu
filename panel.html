@@ -112,6 +112,19 @@ h2{margin:0 0 6px;font-size:18px}
 input[type=range]{width:100%;margin-top:8px;accent-color:var(--acc)}
 .cl{border-color:color-mix(in srgb,var(--acc) 50%,var(--line))}
 .cl button{margin:4px 6px 0 0}
+.tcs{display:flex;flex-wrap:wrap;gap:18px}
+.tc{width:105mm;height:148mm;background:#fff;color:#111;border:1px solid #ccc;border-radius:3mm;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:9mm 8mm 7mm;text-align:center;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.tc.dk{background:var(--b);color:#f4ead8;border-color:var(--b)}
+.tch{height:24mm;display:flex;align-items:center;justify-content:center}
+.tch img{max-height:24mm;max-width:80mm;object-fit:contain}
+.tcn{font:800 11mm/1 Georgia,'Times New Roman',serif}
+.tct b{display:block;font:800 8.4mm/1.1 system-ui,sans-serif}
+.tct span{display:block;margin-top:2mm;font-size:3.7mm;line-height:1.35;opacity:.75}
+.tcq{width:60mm;height:60mm;background:#fff;padding:3mm;border-radius:3mm;border:1.2mm solid var(--f)}
+.tcq img{width:100%;height:100%;display:block}
+.tcb{background:var(--f);color:#fff;font:800 11mm/1 system-ui,sans-serif;padding:3mm 10mm;border-radius:99px}
+.tcf{font-size:3.2mm;opacity:.6}
+.tip{font-size:13px;color:var(--muted);margin:10px 0 0}
 .lg{max-width:380px;margin:12vh auto;padding:0 16px}
 .lg .card{padding:24px}
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ok);color:#fff;padding:9px 20px;border-radius:99px;display:none;z-index:99}
@@ -127,6 +140,7 @@ code{display:block;white-space:pre-wrap;word-break:break-all;background:#0a0b0e;
 @media print{.side,.top,.noprint{display:none!important}body{background:#fff}.app{display:block}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
+<style id="pgs"></style>
 </head>
 <body>
 <div id="app"><p style="padding:24px;color:#8d8f9a">Yüklənir...</p></div>
@@ -140,7 +154,7 @@ const db=supabase.createClient(SB_URL,SB_KEY);
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money=n=>(Math.round(n*100)/100).toFixed(2);
-const S={tab:'orders',rests:[],rest:null,p:null,C:{},nt:10,poll:false};
+const S={tab:'orders',rests:[],rest:null,p:null,C:{},nt:10,qst:'light',qf:'a4',poll:false};
 const NAV={orders:'Sifarişlər',menu:'Menyu',look:'Görünüş',stats:'Statistika',fb:'Rəylər',qr:'QR kodlar'};
 const ST={new:'Yeni',preparing:'Hazırlanır',done:'Hazırdır',cancelled:'Ləğv'};
 const skel=()=>'<div class="sk"></div><div class="sk"></div><div class="sk"></div>';
@@ -357,15 +371,24 @@ fb:d=>{
   if(!d)return skel();
   return `<div class="card"><h2>Müştəri rəyləri</h2>${d.map(f=>`<div class="fbi"><div class="row"><b>${esc(f.kind||'Rəy')}</b><small>${new Date(f.created_at).toLocaleString('az',{dateStyle:'short',timeStyle:'short'})}</small></div><small>${f.item?esc(f.item):''}${f.table_label?', masa '+esc(f.table_label):''}</small>${f.message?`<div>${esc(f.message)}</div>`:''}</div>`).join('')||'<p class="muted">Hələ rəy yoxdur.</p>'}</div>`;
 },
-qr:()=>`<div class="card noprint row"><label style="margin:0">Masa sayı <input id="nt" type="number" min="0" max="200" value="${S.nt}" style="width:90px"></label><span><button data-act="qrgo">Yarat</button> <button class="p" data-act="print">Çap et</button></span></div><div id="qrs"></div>`,
+qr:()=>`<div class="card noprint"><div class="row"><label style="margin:0">Masa sayı <input id="nt" type="number" min="0" max="200" value="${S.nt}" style="width:90px"></label>
+ <label style="margin:0">Üslub <select id="qst" style="width:auto"><option value="light" ${S.qst==='light'?'selected':''}>Açıq (çapa qənaət)</option><option value="dark" ${S.qst==='dark'?'selected':''}>Tünd (restoranın fonu)</option></select></label>
+ <label style="margin:0">Çap formatı <select id="qf" style="width:auto"><option value="a4" ${S.qf==='a4'?'selected':''}>A4-də 4 kart</option><option value="a6" ${S.qf==='a6'?'selected':''}>Hər kart ayrı (A6)</option></select></label>
+ <span><button data-act="qrgo">Yarat</button> <button class="p" data-act="print">Çap et</button></span></div>
+ <p class="tip">Çap pəncərəsində "Kənarlar" (Margins) üçün "Yoxdur" və "Fon qrafikası" (Background graphics) üçün işarəni seç. Kartları mat kağıza çap et və kəs, ya da mat laminasiya et (parlaq səthdə QR işıq əks edib oxunmaya bilər).</p></div><div id="qrs" class="tcs"></div>`,
 rests:()=>`<div class="card"><h2>Yeni restoran</h2><div class="g2"><label>Link adı (məs: burger-house)<input id="ns"></label><label>Restoran adı<input id="nn"></label></div><div class="mf"><span></span><button class="p" data-act="addrest">Əlavə et</button></div></div>
  ${S.rests.map(r=>`<div class="card row"><div><b>${esc(r.name)}</b><br><small>/${esc(r.slug)}</small></div><span><button data-act="pickr" data-id="${r.id}">İdarə et</button> <button data-act="toggle" data-id="${r.id}">${r.active?'Söndür':'Aktiv et'}</button></span></div>`).join('')}
  ${S.rest?`<div class="card"><h2>Sahibkarı bu restorana bağla</h2><p class="muted">Əvvəl Supabase > Authentication > Add user ilə hesab yarat, sonra SQL Editor-də işlət (EMAIL yerinə onun e-poçtu):</p><code>insert into profiles (id, role, restaurant_id) select id, 'owner', '${S.rest.id}' from auth.users where email = 'EMAIL';</code></div>`:''}`
 };
 function qrgo(read=true){
-  if(read)S.nt=Math.max(0,Math.min(200,+$('#nt').value||0));
-  const base=location.origin+'/'+S.rest.slug,box=$('#qrs');box.innerHTML='';
-  for(let n=0;n<=S.nt;n++){const d=document.createElement('div');d.className='qr';d.innerHTML=`<div></div><b>${n?'Masa '+n:'Menyu'}</b>`;box.appendChild(d);new QRCode(d.firstChild,{text:n?base+'?t='+n:base,width:150,height:150})}
+  if(read){S.nt=Math.max(0,Math.min(200,+$('#nt').value||0));S.qst=$('#qst').value;S.qf=$('#qf').value}
+  const base=location.origin+'/'+S.rest.slug,t=S.rest.theme||{},fl=/^#[0-9a-f]{3,8}$/i.test(t.flame||'')?t.flame:'#f2661f',bg=/^#[0-9a-f]{3,8}$/i.test(t.bg||'')?t.bg:'#15161c',dk=S.qst==='dark';
+  $('#pgs').textContent=S.qf==='a4'
+   ?'@page{size:A4;margin:0}@media print{.tcs{display:grid!important;grid-template-columns:repeat(2,105mm);gap:0;justify-content:center}.tc{border:.2mm dashed #888;border-radius:0;break-inside:avoid;page-break-inside:avoid}}'
+   :'@page{size:A6;margin:0}@media print{.tcs{display:block!important}.tc{page-break-after:always;border:0;border-radius:0}}';
+  const head=t.logo_url?`<img src="${esc(t.logo_url)}" alt="">`:`<div class="tcn" style="color:${fl}">${esc(S.rest.name)}</div>`;
+  $('#qrs').innerHTML=Array.from({length:S.nt+1},(_,n)=>`<div class="tc${dk?' dk':''}" style="--f:${fl};--b:${bg}"><div class="tch">${head}</div><div class="tct"><b>Menyunu skan et</b><span>Telefonun kamerasını QR koda tut, menyuya bax${S.rest.orders_enabled&&n?' və sifariş ver':''}</span></div><div class="tcq" id="q${n}"></div><div class="tcb">${n?'Masa '+n:'Menyu'}</div><div class="tcf">menyum.me/${esc(S.rest.slug)}</div></div>`).join('');
+  for(let n=0;n<=S.nt;n++)new QRCode($('#q'+n),{text:n?base+'?t='+n:base,width:480,height:480,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
 }
 
 /* ---------- məhsul redaktə pəncərəsi ---------- */
