@@ -244,9 +244,11 @@ const cleanLogo=f=>new Promise((ok,no)=>{const im=new Image();im.onload=()=>{
   const pad=Math.round(Math.max(x1-x0,y1-y0)*.04);x0=Math.max(0,x0-pad);y0=Math.max(0,y0-pad);x1=Math.min(w-1,x1+pad);y1=Math.min(h-1,y1+pad);
   const o=document.createElement('canvas');o.width=x1-x0+1;o.height=y1-y0+1;o.getContext('2d').drawImage(c,x0,y0,o.width,o.height,0,0,o.width,o.height);o.toBlob(ok,'image/png');
 };im.onerror=()=>no(new Error('Şəkil oxunmadı'));im.src=URL.createObjectURL(f)});
+const squareIcon=f=>new Promise((ok,no)=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d'),m=Math.min(im.width,im.height);x.drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,128,128);c.toBlob(ok,'image/png')};im.onerror=()=>no(new Error('Şəkil oxunmadı'));im.src=URL.createObjectURL(f)});
 async function up(file,kind){
   let blob=file,ext=(file.name.split('.').pop()||'bin').toLowerCase();
   if(kind==='logo'&&file.type.startsWith('image/')&&file.type!=='image/gif'){blob=await cleanLogo(file);ext='png'}
+  else if(kind==='fav'&&file.type.startsWith('image/')){blob=await squareIcon(file);ext='png'}
   else if(file.type.startsWith('image/')&&file.type!=='image/gif'){blob=await shrink(file);ext='jpg'}
   if(blob.size>10*1024*1024)throw new Error('Fayl 10 MB-dan böyükdür');
   const path=S.rest.id+'/'+crypto.randomUUID()+'.'+ext;
@@ -304,8 +306,9 @@ orders:d=>{
    ${o.order_items.map(i=>`<div class="it">${i.qty} x ${esc(i.name)}</div>`).join('')}${o.note?`<div class="muted">Qeyd: ${esc(o.note)}</div>`:''}
    <div class="row" style="margin-top:8px"><b>${money(o.total)} ${esc(S.rest.currency)}</b></div>
    <div class="btns">${o.status==='new'?`<button class="p" data-act="st" data-id="${o.id}" data-v="preparing">Qəbul et</button><button class="d" data-act="st" data-id="${o.id}" data-v="cancelled">Ləğv</button>`:''}${o.status==='preparing'?`<button class="p" data-act="st" data-id="${o.id}" data-v="done">Hazırdır</button>`:''}</div></div>`;
-  const col=(st,t,n)=>{const l=d.filter(o=>o.status===st).slice(0,n||99);return `<div class="col"><h3>${t}<span class="bd">${l.length}</span></h3>${l.map(oc).join('')||'<p class="muted">Boşdur. Müştəri sifariş verəndə burada görünəcək və səs çalacaq.</p>'}</div>`};
-  return checklist()+`<div class="cols">${col('new','Yeni')}${col('preparing','Hazırlanır')}${col('done','Hazırdır',8)}</div>`;
+  const col=(st,t,n)=>{const l=d.filter(o=>o.status===st).slice(0,n||99);return `<div class="col"><h3>${t}<span class="bd">${l.length}</span></h3>${l.map(oc).join('')||'<p class="muted">Boşdur</p>'}</div>`};
+  const none=!d.some(o=>['new','preparing','done'].includes(o.status));
+  return checklist()+(none?'<div class="card"><b>Hələ sifariş yoxdur.</b><p class="muted" style="margin:4px 0 0">Müştəri sifariş verəndə burada görünəcək və səs çalacaq.</p></div>':'')+`<div class="cols">${col('new','Yeni')}${col('preparing','Hazırlanır')}${col('done','Hazırdır',8)}</div>`;
 },
 menu:d=>{
   if(!d)return skel();
@@ -329,6 +332,7 @@ look:()=>{
   <div class="card"><h2>Şrift</h2><label>Restoran adı və başlıqlar üçün<select id="f_font"><option value="">Standart (Almendra)</option>${fl.filter(f=>f!=='Almendra').map(f=>`<option ${f===cur?'selected':''}>${esc(f)}</option>`).join('')}</select></label></div>
   <div class="card"><h2>Logo</h2><p class="muted" style="margin:0">Logonun fonu qara və ya ağdırsa, fon avtomatik silinir və kənar boşluqlar kəsilir.</p>${mediaBox('logo','Logo şəkli',t.logo_url)}
    <label>Logo ölçüsü: <b id="lsv">${t.logo_size||100}</b> px<input type="range" id="f_lsize" min="40" max="220" value="${t.logo_size||100}"></label></div>
+  <div class="card"><h2>Sekmə ikonu</h2><p class="muted" style="margin:0">Brauzer sekməsində görünən kiçik şəkil. İstəsən öz ikonunu yüklə (kvadrat şəkil yaxşıdır, avtomatik ortadan kəsilir). Yükləməsən, restoranın əsas rəngində standart ikon qalır.</p>${mediaBox('fav','İkon',t.favicon_url)}</div>
   <div class="card"><h2>Fon şəkli (istəyə bağlı)</h2><p class="muted" style="margin:0">Boş qoysan standart tünd fon qalır.</p>${mediaBox('bgimg','Fon şəkli',t.bg_image)}</div>
   <div class="card"><h2>Sifariş</h2><label class="chk"><span class="sw"><input type="checkbox" id="f_oe" ${S.rest.orders_enabled?'checked':''}><span></span></span> Müştərilər menyudan sifariş verə bilsin</label><small>Söndürsən, menyuda yalnız yeməklərə baxmaq olar, səbət və sifariş düyməsi görünmür.</small></div>
   ${a?`<div class="card"><h2>Admin ayarları</h2><div class="g2"><label>Restoran adı<input id="f_nm" value="${esc(S.rest.name)}"></label><label>Dizayn açarı (theme_key)<input id="f_tk" value="${esc(S.rest.theme_key)}"></label></div></div>`:''}
@@ -432,7 +436,7 @@ document.addEventListener('click',async e=>{
   if(a==='delitem'){if(confirm('Məhsul silinsin?')&&chk(await db.from('items').delete().eq('id',id))){$('#modal').hidden=true;again('menu')}return}
   if(a==='preset'){const q=b.dataset.p.split('|');$('#f_flame').value=q[1];$('#f_gold').value=q[2];$('#f_bg').value=q[3];$('#f_kraft').value=q[4];let fo=q[5];if(fo&&!(await fontOK(fo))){fo='';toast('Bu üslubun şrifti Azərbaycan hərflərini dəstəkləmir, standart şrift qoyuldu',1)}$('#f_font').value=fo;pvUpdate();return}
   if(a==='savelook'){
-    const th={...(S.rest.theme||{}),flame:v('flame'),gold:v('gold'),bg:v('bg'),kraft:v('kraft')||undefined,font:v('font').trim()||undefined,logo_url:v('logo')||undefined,logo_size:(+v('lsize')&&+v('lsize')!==100)?+v('lsize'):undefined,bg_image:v('bgimg')||undefined};
+    const th={...(S.rest.theme||{}),flame:v('flame'),gold:v('gold'),bg:v('bg'),kraft:v('kraft')||undefined,font:v('font').trim()||undefined,logo_url:v('logo')||undefined,logo_size:(+v('lsize')&&+v('lsize')!==100)?+v('lsize'):undefined,bg_image:v('bgimg')||undefined,favicon_url:v('fav')||undefined};
     const o={theme:JSON.parse(JSON.stringify(th)),orders_enabled:$('#f_oe').checked};
     if(S.p.role==='admin'){o.theme_key=v('tk').trim()||'default';o.name=v('nm').trim()||S.rest.name}
     if(chk(await db.from('restaurants').update(o).eq('id',rid))){Object.assign(S.rest,o);topbar();toast('Saxlanıldı')}return}
