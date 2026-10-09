@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Menyu</title>
-<link rel="icon" id="fav" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f2661f'/%3E%3Ctext x='32' y='47' font-size='42' text-anchor='middle' fill='%23fff' font-family='Georgia,serif' font-weight='700'%3ES%3C/text%3E%3C/svg%3E">
+<link rel="icon" id="fav" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23f2661f%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M18%2013v14M24%2013v14M30%2013v14%22%2F%3E%3Cpath%20d%3D%22M18%2027q0%208%206%208t6-8%22%2F%3E%3Cpath%20d%3D%22M24%2035v17%22%2F%3E%3Cpath%20d%3D%22M42%2033v19%22%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%22M42%2012c7%202%209%2010%207%2021H42z%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Outfit:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Almendra:wght@700&family=Outfit:wght@400;500;600;700&display=swap"></noscript>
@@ -140,6 +140,7 @@ function show(d){
   if(show.t!==d.id){show.t=d.id;api('rpc/top_items',{m:'POST',b:{rid:d.id,n:3}}).then(r=>r.json()).then(a=>{if(Array.isArray(a)){TOP=a.map(x=>x.item_id);render();repaint();paintBar()}}).catch(()=>{})}
 }
 async function fontOK(n){try{await document.fonts.load('700 40px "'+n+'"','Əə');const c=document.createElement('canvas').getContext('2d'),m=f=>{c.font='700 40px "'+n+'",'+f;return c.measureText('Əə').width},w=[m('monospace'),m('serif'),m('sans-serif')];return Math.max(...w)-Math.min(...w)<.5}catch(e){return true}}
+const stdIcon=c=>'data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${c}"/><g fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v14M24 13v14M30 13v14"/><path d="M18 27q0 8 6 8t6-8"/><path d="M24 35v17"/><path d="M42 33v19"/></g><path d="M42 12c7 2 9 10 7 21H42z" fill="#fff"/></svg>`);
 /* Sahibkarın tənzimləmələri: restaurants.theme (jsonb) */
 function applyTheme(r){
   document.title=r.name+' Menyu';document.body.dataset.theme=r.theme_key;
@@ -149,7 +150,7 @@ function applyTheme(r){
   if(th.flame&&!th.flame2&&th.flame.toLowerCase()!=='#f2661f')document.documentElement.style.setProperty('--flame2','color-mix(in srgb,'+th.flame+' 68%,#fff)');
   if(th.font&&!document.getElementById('thf')){const l=document.createElement('link');l.id='thf';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(th.font).replace(/%20/g,'+')+'&display=swap';l.onload=()=>fontOK(th.font).then(ok=>{if(ok)document.documentElement.style.setProperty('--display',`'${th.font}',Georgia,serif`)});document.head.appendChild(l)}
   if(th.bg_image)document.documentElement.style.setProperty('--bgimg','url("'+th.bg_image.replace(/["\\()]/g,'')+'")');
-  if(th.logo_url)$('fav').href=th.logo_url;
+  $('fav').href=th.favicon_url||stdIcon(th.flame||'#f2661f');
   $('brand').innerHTML=th.logo_url?`<img src="${esc(th.logo_url)}" alt="${esc(r.name)}">`:esc(r.name);
   $('foot').textContent=(table?'Masa '+table:'');
 }
