@@ -41,6 +41,8 @@ section h2{font-family:var(--display);font-size:30px;color:var(--gold);margin:26
 #dbox{position:relative;background:var(--bg);width:100%;max-width:600px;margin:0 auto;border-radius:24px 24px 0 0;max-height:94dvh;overflow:auto;animation:up .3s ease}
 @keyframes up{from{transform:translateY(40px);opacity:0}}
 .dimg{aspect-ratio:4/3;background:#101116;position:relative}
+.dimg.wide{aspect-ratio:16/9}
+.dimg.wide .ex video{object-fit:cover}
 .ex{position:absolute;inset:0;background:#000;opacity:0;transition:opacity .6s;pointer-events:none}
 .ex.on{opacity:1}
 .ex img,.ex video{width:100%;height:100%;object-fit:contain}
@@ -91,12 +93,30 @@ select,textarea,#tb{width:100%;margin-top:8px;padding:11px;border-radius:10px;bo
 .link{background:none;border:0;color:var(--muted);font:16px var(--body);padding:12px;width:100%;cursor:pointer}
 footer{text-align:center;color:var(--muted);font-size:13px;padding:28px 0 0}
 .msg{text-align:center;padding:80px 16px;color:var(--muted)}
+#splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:var(--bg);background-image:radial-gradient(700px 420px at 50% 32%,color-mix(in srgb,var(--flame) 26%,transparent),transparent 70%);transition:opacity .55s,visibility .55s}
+#splash.off{opacity:0;visibility:hidden;pointer-events:none}
+.sp{position:relative;width:132px;height:132px;display:grid;place-items:center}
+.ring{position:absolute;inset:0;width:100%;height:100%;animation:rot 1.6s linear infinite}
+.ring circle{fill:none;stroke:var(--flame);stroke-width:2.6;stroke-linecap:round;stroke-dasharray:90 200}
+#spi{width:74px;height:74px;display:grid;place-items:center;animation:bob 1.3s ease-in-out infinite}
+#spi img{max-width:100%;max-height:100%;object-fit:contain}
+#spi svg{width:100%;height:100%}
+.fk path{fill:none;stroke:var(--flame);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.fk .bl{fill:var(--flame);stroke:none}
+#spt{margin:0;color:var(--muted);font-weight:500;letter-spacing:.02em}
+.dts i{font-style:normal;animation:dot 1.2s infinite both}
+.dts i:nth-child(2){animation-delay:.2s}.dts i:nth-child(3){animation-delay:.4s}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes bob{50%{transform:translateY(-7px) scale(1.04)}}
+@keyframes dot{0%,80%,100%{opacity:.2}40%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.ring,#spi,.dts i{animation:none!important}}
 [hidden]{display:none!important}
 button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto}}
 </style>
 </head>
 <body>
+<div id="splash" aria-hidden="true"><div class="sp"><svg class="ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg><div id="spi"></div></div><p id="spt">Menyu hazırlanır<span class="dts"><i>.</i><i>.</i><i>.</i></span></p></div>
 <div class="wrap">
   <header><h1 class="logo" id="brand"></h1></header>
   <main id="menu"><p class="msg">Yüklənir...</p></main>
@@ -107,6 +127,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 <div id="sheet" hidden><div id="box"></div></div>
 
 <script>
+const SPLASH_MIN=1200,T0=performance.now();   /* açılış ekranı ən azı bu qədər millisaniyə görünür */
 const SB_URL='https://qybeegkeowpdkdmzoryj.supabase.co',SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5YmVlZ2tlb3dwZGtkbXpvcnlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMDk5NjYsImV4cCI6MjEwNjg4NTk2Nn0.MQ5iDWLxUXiKy3qbzAh6AbdxXeJyTfRVQ1hkYOw7n5o';
 const api=(p,o={})=>fetch(SB_URL+'/rest/v1/'+p,{method:o.m||'GET',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',...(o.h||{})},body:o.b?JSON.stringify(o.b):undefined});
 const MIN={Prefer:'return=minimal'};
@@ -118,8 +139,23 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money=n=>(Math.round(n*100)/100).toFixed(2);
 const FB=['Gec gəldi','Soyuq idi','Dadı xoşuma gəlmədi','Digər'];
+const FKSVG='<svg class="fk" viewBox="0 0 64 64"><path d="M18 13v14M24 13v14M30 13v14"/><path d="M18 27q0 8 6 8t6-8"/><path d="M24 35v17"/><path d="M42 33v19"/><path class="bl" d="M42 12c7 2 9 10 7 21H42z"/></svg>';
+let SPL=false,REV=0;
+function splashTheme(th){th=th||{};const st=$('splash').style;if(th.bg)st.setProperty('--bg',th.bg);if(th.flame)st.setProperty('--flame',th.flame);$('spi').innerHTML=th.logo_url?`<img src="${esc(th.logo_url)}" alt="">`:FKSVG}
+function hideSplash(){
+  if(SPL)return;SPL=true;
+  const imgs=[...document.querySelectorAll('.img img')].slice(0,4);
+  const ready=Promise.race([Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))),new Promise(r=>setTimeout(r,2500))]);
+  ready.then(()=>setTimeout(()=>$('splash').classList.add('off'),Math.max(0,SPLASH_MIN-(performance.now()-T0))));
+}
+/* videonu tərsinə oynat: sondan başa (brauzerlər geri oxutmağı birbaşa bilmir, kadr-kadr geri çəkirik) */
+function rev(v,done){
+  cancelAnimationFrame(REV);v.pause();let last=performance.now();
+  const step=n=>{const dt=(n-last)/1000;last=n;const t=v.currentTime-dt;if(t<=.03){v.currentTime=0;if(done)done();return}v.currentTime=t;REV=requestAnimationFrame(step)};
+  REV=requestAnimationFrame(step);
+}
 const cart={};let R,ITEMS=[],CATS=[],canOrder=false,CUR=null,TOP=[];
-const fail=t=>{$('menu').innerHTML=`<p class="msg">${esc(t)}<br><br><a href="/" style="color:var(--gold)">menyum.me</a></p>`};
+const fail=t=>{SPL=true;$('splash').classList.add('off');$('menu').innerHTML=`<p class="msg">${esc(t)}<br><br><a href="/" style="color:var(--gold)">menyum.me</a></p>`};
 
 async function init(){
   if(!slug) return fail('Restoran tapılmadı.');
@@ -137,7 +173,7 @@ async function init(){
 }
 function show(d){
   R=d;canOrder=!!d.orders_enabled;ITEMS=d.items||[];CATS=d.categories||[];
-  applyTheme(d);render();repaint();paintBar();
+  applyTheme(d);render();repaint();paintBar();hideSplash();
   if(show.t!==d.id){show.t=d.id;api('rpc/top_items',{m:'POST',b:{rid:d.id,n:3}}).then(r=>r.json()).then(a=>{if(Array.isArray(a)){TOP=a.map(x=>x.item_id);render();repaint();paintBar()}}).catch(()=>{})}
 }
 async function fontOK(n){try{await document.fonts.load('700 40px "'+n+'"','Əə');const c=document.createElement('canvas').getContext('2d'),m=f=>{c.font='700 40px "'+n+'",'+f;return c.measureText('Əə').width},w=[m('monospace'),m('serif'),m('sans-serif')];return Math.max(...w)-Math.min(...w)<.5}catch(e){return true}}
@@ -157,7 +193,7 @@ function applyTheme(r){
 }
 const ingOf=s=>{const m=/^(\p{Extended_Pictographic}\S*)\s+(.+)$/u.exec(s);return m?{e:m[1],n:m[2]}:{e:'•',n:s}};
 const art=x=>x.image_url?`<img src="${esc(x.image_url)}" alt="" loading="lazy">`:`<div class="ph"><span>${esc(R?.name||'')}</span></div>`;
-const media=u=>/\.(mp4|webm)(\?|$)/i.test(u)?`<video src="${esc(u)}" muted loop playsinline preload="metadata"></video>`:`<img src="${esc(u)}" alt="">`;
+const media=u=>/\.(mp4|webm)(\?|$)/i.test(u)?`<video src="${esc(u)}" muted playsinline preload="auto" disablepictureinpicture></video>`:`<img src="${esc(u)}" alt="">`;
 const qtyDiv=(id,c='')=>canOrder?`<div class="qty ${c}" data-q="${id}"></div>`:'';
 const disc=x=>{const o=+x.old_price,p=+x.price;return o>p&&p>=0?{o,p,pct:Math.max(1,Math.round((1-p/o)*100)),sv:o-p}:null};
 const BADGE_COL={'Yeni':'#1fb36b','Sevilən':'#e5486c','Şefin seçimi':'#8a5cf5','Kombo':'#2f7de1','Acı':'#e0301e','Vegetarian':'#3f9b4a','Ən çox sifariş edilən':'var(--flame)'};
@@ -185,7 +221,7 @@ function openDet(id){
   const x=ITEMS.find(i=>i.id===id);if(!x)return;CUR=x;
   api('events',{m:'POST',h:MIN,b:{restaurant_id:R.id,type:'item_view',item_id:id}});
   const ing=x.ingredients||[];
-  $('dbox').innerHTML=`<button class="x" data-close aria-label="Bağla">×</button><div class="dimg">${art(x)}${x.explode_url?`<div class="ex" id="ex">${media(x.explode_url)}</div>`:''}</div><div class="dbody">
+  $('dbox').innerHTML=`<button class="x" data-close aria-label="Bağla">×</button><div class="dimg${/\.(mp4|webm)(\?|$)/i.test(x.explode_url||'')?' wide':''}">${art(x)}${x.explode_url?`<div class="ex" id="ex">${media(x.explode_url)}</div>`:''}</div><div class="dbody">
   <div class="row"><h2>${esc(x.name)}</h2>${priceBig(x)}</div>
   <div class="chips">${x.weight?`<span>${esc(x.weight)}</span>`:''}${x.calories?`<span>🔥 ${x.calories} kkal</span>`:''}${disc(x)?`<span class="sv">Qənaət ${money(disc(x).sv)} ${esc(R.currency)} (−${disc(x).pct}%)</span>`:''}${(x.badges||[]).map(bdg).join('')}</div>
   ${x.description?`<p class="desc">${esc(x.description)}</p>`:''}
@@ -223,10 +259,18 @@ document.addEventListener('click',e=>{
   const t=e.target;let b;
   if(b=t.closest('[data-a]')){const id=b.dataset.id;cart[id]=Math.max(0,(cart[id]||0)+(b.dataset.a==='+'?1:-1));repaint();paintBar();if(!$('sheet').hidden)openSheet();return}
   if(b=t.closest('[data-open]')){openDet(b.dataset.open);return}
-  if(t.closest('[data-close]')||t.id==='det'){$('det').hidden=true;lock();return}
+  if(t.closest('[data-close]')||t.id==='det'){cancelAnimationFrame(REV);$('det').hidden=true;lock();return}
   if(t.closest('[data-close2]')||t.id==='sheet'){$('sheet').hidden=true;lock();return}
   if(b=t.closest('[data-ing]')){const ex=$('ex'),st=$('stk');
-    if(ex){const on=ex.classList.toggle('on');b.textContent=on?'Tərkibi bağla':'Tərkibi aç';const v=ex.querySelector('video');if(v){if(on){v.currentTime=0;v.play()}else v.pause()}}
+    if(ex){
+      const v=ex.querySelector('video');
+      if(!v){const on=ex.classList.toggle('on');b.textContent=on?'Tərkibi bağla':'Tərkibi aç'}
+      else{
+        cancelAnimationFrame(REV);
+        if(b.dataset.o!=='1'){b.dataset.o='1';b.textContent='Tərkibi bağla';ex.classList.add('on');v.play()}
+        else{b.dataset.o='0';b.textContent='Tərkibi aç';rev(v,()=>ex.classList.remove('on'))}
+      }
+    }
     else if(st){const o=st.hidden;st.hidden=!o;b.textContent=o?'Tərkibi bağla':'Tərkibi aç';if(o)st.innerHTML=CUR.ingredients.map((v,i)=>`<div class="ing" style="animation-delay:${i*130}ms"><span>${esc(ingOf(v).n)}</span></div>`).join('')}
     return}
   if(t.closest('[data-fb]')){$('fbf').hidden=!$('fbf').hidden;return}
@@ -239,6 +283,8 @@ document.addEventListener('change',e=>{
   cart[t.dataset.id]=Math.min(99,Math.max(0,parseInt(t.value,10)||0));
   repaint();paintBar();if(!$('sheet').hidden)openSheet();
 });
+splashTheme(null);
+try{const c=JSON.parse(localStorage.getItem('m_'+slug));if(c&&c.theme)splashTheme(c.theme)}catch(e){}
 init();
 </script>
 </body>
