@@ -385,7 +385,7 @@ qr:()=>`<div class="card noprint"><div class="row"><label style="margin:0">Masa 
  <span><button data-act="qrgo">Yarat</button> <button class="p" data-act="print">Çap et</button></span></div>
  <p class="tip">Çap pəncərəsində "Kənarlar" (Margins) üçün "Yoxdur" və "Fon qrafikası" (Background graphics) üçün işarəni seç. Kartları mat kağıza çap et və kəs, ya da mat laminasiya et (parlaq səthdə QR işıq əks edib oxunmaya bilər).</p></div><div id="qrs" class="tcs"></div>`,
 rests:()=>`<div class="card"><h2>Yeni restoran</h2><div class="g2"><label>Link adı (məs: burger-house)<input id="ns"></label><label>Restoran adı<input id="nn"></label></div><div class="mf"><span></span><button class="p" data-act="addrest">Əlavə et</button></div></div>
- ${S.rests.map(r=>`<div class="card row"><div><b>${esc(r.name)}</b><br><small>/${esc(r.slug)}</small></div><span><button data-act="pickr" data-id="${r.id}">İdarə et</button> <button data-act="toggle" data-id="${r.id}">${r.active?'Söndür':'Aktiv et'}</button></span></div>`).join('')}
+ ${S.rests.map(r=>`<div class="card row"><div><b>${esc(r.name)}</b><br><small>/${esc(r.slug)}</small></div><span><button data-act="pickr" data-id="${r.id}">İdarə et</button> <button data-act="toggle" data-id="${r.id}">${r.active?'Söndür':'Aktiv et'}</button> <button class="d" data-act="delrest" data-id="${r.id}">Sil</button></span></div>`).join('')}
  ${S.rest?`<div class="card"><h2>Sahibkarı dəvət et</h2><p class="muted" style="margin:0">Seçilmiş restoran: <b>${esc(S.rest.name)}</b>. E-poçtu yaz, sahibkara şifrə təyin etmək üçün dəvət məktubu gedir.</p><label>E-poçt<input id="inv" type="email" placeholder="sahibkar@gmail.com"></label><div class="mf"><span></span><button class="p" data-act="invite">Dəvət göndər</button></div><details><summary>Əl ilə bağlamaq (SQL)</summary><code>insert into profiles (id, role, restaurant_id) select id, 'owner', '${S.rest.id}' from auth.users where email = 'EMAIL';</code></details></div>`:''}`
 };
 function qrgo(read=true){
@@ -447,7 +447,7 @@ document.addEventListener('click',async e=>{
   const a=b.dataset.act,id=b.dataset.id,rid=S.rest?.id,v=k=>$('#f_'+k)?.value??'';
   const again=t=>go(t||S.tab,true);
   if(a==='forgot'){const em=($('#em')?.value||'').trim();if(!em)return toast('Əvvəl e-poçtunu yuxarıdakı xanaya yaz',1);const r=await db.auth.resetPasswordForEmail(em,{redirectTo:location.origin+'/panel'});if(r.error)toast('Xəta: '+r.error.message,1);else toast('Əgər bu e-poçt qeydiyyatdadırsa, şifrə yeniləmə linki göndərildi');return}
-  if(a==='invite'){const em=($('#inv')?.value||'').trim();if(!em)return toast('E-poçt yaz',1);b.disabled=true;const r=await db.functions.invoke('invite-owner',{body:{email:em,restaurant_id:rid,redirectTo:location.origin+'/panel'}});b.disabled=false;if(r.error||!r.data||r.data.error)toast('Xəta: '+((r.data&&r.data.error)||(r.error&&r.error.message)||'naməlum'),1);else{toast(r.data.existing?'Hesab artıq var idi, restorana bağlandı':'Dəvət göndərildi');$('#inv').value=''}return}
+  if(a==='invite'){const em=($('#inv')?.value||'').trim();if(!em)return toast('E-poçt yaz',1);b.disabled=true;const r=await db.functions.invoke('invite-owner',{body:{email:em,restaurant_id:rid,redirectTo:location.origin+'/panel'}});b.disabled=false;if(r.error||!r.data||r.data.error)toast((r.error&&r.error.name==='FunctionsFetchError')?'Dəvət funksiyasına çatmaq olmadı. Supabase-də "invite-owner" funksiyası yerləşdirilib?':'Xəta: '+((r.data&&r.data.error)||(r.error&&r.error.message)||'naməlum'),1);else{toast(r.data.existing?'Hesab artıq var idi, restorana bağlandı':'Dəvət göndərildi');$('#inv').value=''}return}
   if(a==='tab')return go(id);
   if(a==='out'){await db.auth.signOut();return login()}
   if(a==='mclose'){$('#modal').hidden=true;return}
@@ -481,6 +481,17 @@ document.addEventListener('click',async e=>{
     if(!slug||!name)return toast('Link adı və ad lazımdır',1);
     if(['panel','admin','img','menu','home','api','login','index','assets','static','menyum'].includes(slug))return toast('Bu link adı sistem üçün ayrılıb, başqa ad seç',1);
     if(chk(await db.from('restaurants').insert({slug,name}))){S.rests=(await db.from('restaurants').select('*').order('created_at')).data;if(!S.rest)S.rest=S.rests[0];topbar();paint()}return}
+  if(a==='delrest'){
+    const r=S.rests.find(x=>x.id===id);if(!r)return;
+    const t=prompt('"'+r.name+'" restoranı və onun bütün menyusu, sifarişləri, rəyləri və statistikası SİLİNƏCƏK. Geri qaytarmaq olmur.\n\nTəsdiq üçün link adını yaz: '+r.slug);
+    if(t===null)return;
+    if(t.trim()!==r.slug)return toast('Link adı düz yazılmadı, silinmədi',1);
+    const res=await db.from('restaurants').delete().eq('id',id);
+    if(res.error){toast(res.error.code==='23503'?'Bu restorana bağlı sahibkar hesabı var. Əvvəl hesabı ayır.':'Xəta: '+res.error.message,1);return}
+    try{const l=await db.storage.from('media').list(id);if(l.data&&l.data.length)await db.storage.from('media').remove(l.data.map(f=>id+'/'+f.name))}catch(e){}
+    S.rests=S.rests.filter(x=>x.id!==id);
+    if(S.rest&&S.rest.id===id){S.rest=S.rests[0]||null;if(!S.rest)S.tab='rests'}
+    topbar();paint();toast('Restoran silindi');return}
   if(a==='pickr'){S.rest=S.rests.find(r=>r.id===id);topbar();go('menu');return}
   if(a==='toggle'){const r=S.rests.find(x=>x.id===id);if(chk(await db.from('restaurants').update({active:!r.active}).eq('id',id))){r.active=!r.active;paint()}return}
 });
