@@ -113,6 +113,32 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:28px 0 0}
 [hidden]{display:none!important}
 button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto}}
+/* v3: kadr kimi kartlar, müxtəlif ölçülü şəbəkə */
+.wrap{max-width:1040px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;grid-auto-flow:dense}
+@media (min-width:720px){.grid{grid-template-columns:repeat(3,1fr);gap:16px}}
+@media (min-width:1000px){.grid{grid-template-columns:repeat(4,1fr)}}
+.card{aspect-ratio:4/5;border:0;border-radius:22px;background:#101116;box-shadow:0 12px 28px rgba(0,0,0,.38);margin:0}
+.card.wide{grid-column:span 2;aspect-ratio:16/10}
+.card .img{position:absolute;inset:0;aspect-ratio:auto;z-index:0}
+.card .img::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 46%,rgba(8,8,12,.9))}
+.card .cp{position:absolute;left:15px;right:92px;bottom:15px;padding:0;z-index:2}
+.card .cp h3{padding:0!important;font-size:18px;line-height:1.15;font-weight:700;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.65)}
+.card.wide .cp h3{font-size:25px}
+.card .cp small{display:block;margin-top:4px;color:rgba(255,255,255,.75);font-size:13px}
+.card .pr{z-index:2;right:12px;bottom:12px;min-width:58px;height:58px}
+.card .pr.dc{height:auto}
+.card .qty{left:10px;top:10px;padding:3px;z-index:3;backdrop-filter:blur(6px);background:rgba(10,10,14,.62)}
+.card .qty button{width:38px;height:38px}
+.card .qty input{height:38px;width:42px}
+.card .rbs{right:10px;top:10px;z-index:3}
+.card .rb{font-size:11px;padding:3px 9px}
+.card .sale{left:12px;top:64px;bottom:auto;z-index:2}
+.card.noq .sale{top:12px}
+.sh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:34px}
+.sh h2{margin:0;font-size:clamp(28px,5vw,40px);line-height:1.05}
+.sh span{color:var(--muted);font-size:14px;white-space:nowrap}
+.sq{width:92px;height:10px;margin:6px 0 14px;background:var(--flame);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='92' height='10' viewBox='0 0 92 10'%3E%3Cpath d='M2 6Q9 0 16 5T30 5T44 5T58 5T72 5T90 4' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='92' height='10' viewBox='0 0 92 10'%3E%3Cpath d='M2 6Q9 0 16 5T30 5T44 5T58 5T72 5T90 4' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat}
 </style>
 </head>
 <body>
@@ -200,7 +226,8 @@ const BADGE_COL={'Yeni':'#1fb36b','Sevilən':'#e5486c','Şefin seçimi':'#8a5cf5
 const bdg=b=>`<span class="rb" style="background:${BADGE_COL[b]||'var(--gold)'}">${esc(b)}</span>`;
 const badgesOf=x=>[...(x.badges||[]),...(TOP.includes(x.id)?['Ən çox sifariş edilən']:[])].slice(0,2).map(bdg).join('');
 const priceBig=x=>{const d=disc(x);return `<span class="pr big${d?' dc':''}">${d?`<s>${money(d.o)}</s>`:''}${money(+x.price)} ${esc(R.currency)}</span>`};
-const card=x=>{const d=disc(x);return `<article class="card${d?' hasd':''}" data-open="${x.id}"><div class="img">${art(x)}${d?`<span class="sale">−${d.pct}%</span>`:''}</div>${qtyDiv(x.id)}<div class="rbs">${badgesOf(x)}</div><div class="cp"><h3>${esc(x.name)}</h3><small>${esc(x.weight||'')}</small></div>${d?`<div class="pr dc"><s>${money(d.o)}</s><b>${money(d.p)}<i class="cu">${esc(R.currency)}</i></b></div>`:`<div class="pr"><b>${money(+x.price)}</b><i class="cu">${esc(R.currency)}</i></div>`}</article>`};
+const isWide=(x,i,n)=>n===1||(i===0&&n>2)||(x.badges||[]).some(b=>b==='Kombo'||b==='Şefin seçimi');
+const card=(x,w)=>{const d=disc(x);return `<article class="card${w?' wide':''}${d?' hasd':''}${canOrder?'':' noq'}" data-open="${x.id}"><div class="img">${art(x)}${d?`<span class="sale">−${d.pct}%</span>`:''}</div>${qtyDiv(x.id)}<div class="rbs">${badgesOf(x)}</div><div class="cp"><h3>${esc(x.name)}</h3><small>${esc(x.weight||'')}</small></div>${d?`<div class="pr dc"><s>${money(d.o)}</s><b>${money(d.p)}<i class="cu">${esc(R.currency)}</i></b></div>`:`<div class="pr"><b>${money(+x.price)}</b><i class="cu">${esc(R.currency)}</i></div>`}</article>`};
 function render(){
   const known=new Set(CATS.map(c=>c.id));
   const groups=CATS.map(c=>({n:c.name,note:c.note,its:ITEMS.filter(x=>x.category_id===c.id)}));
@@ -209,7 +236,7 @@ function render(){
   const gs=groups.filter(g=>g.its.length);
   const tops=TOP.map(id=>ITEMS.find(x=>x.id===id)).filter(Boolean);
   if(tops.length>=2)gs.unshift({n:'Ən çox sifariş edilənlər',its:tops});
-  $('menu').innerHTML=gs.map(g=>`<section><h2>${esc(g.n)}</h2>${g.note?`<p class="note">${esc(g.note)}</p>`:''}<div class="grid">${g.its.map(card).join('')}</div></section>`).join('');
+  $('menu').innerHTML=gs.map(g=>`<section><div class="sh"><h2>${esc(g.n)}</h2><span>${g.its.length} məhsul</span></div><div class="sq"></div>${g.note?`<p class="note">${esc(g.note)}</p>`:''}<div class="grid">${g.its.map((x,i)=>card(x,isWide(x,i,g.its.length))).join('')}</div></section>`).join('');
 }
 const qtyHtml=id=>{const n=cart[id]||0;return n?`<button class="minus" data-a="-" data-id="${id}" aria-label="Azalt">−</button><input class="qi" data-id="${id}" value="${n}" inputmode="numeric" maxlength="2" aria-label="Say" onfocus="this.select()"><button data-a="+" data-id="${id}" aria-label="Artır">+</button>`:`<button data-a="+" data-id="${id}" aria-label="Səbətə at">+</button>`};
 const repaint=()=>document.querySelectorAll('[data-q]').forEach(e=>e.innerHTML=qtyHtml(e.dataset.q));
