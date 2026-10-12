@@ -271,7 +271,7 @@ async function up(file,kind){
   let blob=file,ext=(file.name.split('.').pop()||'bin').toLowerCase();
   if(kind==='logo'&&file.type.startsWith('image/')&&file.type!=='image/gif'){blob=await cleanLogo(file);ext='png'}
   else if(kind==='fav'&&file.type.startsWith('image/')){blob=await squareIcon(file);ext='png'}
-  else if(file.type.startsWith('image/')&&file.type!=='image/gif'){blob=await shrink(file);ext='jpg'}
+  else if(file.type.startsWith('image/')&&file.type!=='image/gif'){blob=await shrink(file,kind==='cover'?1600:1200);ext='jpg'}
   if(blob.size>10*1024*1024)throw new Error('Fayl 10 MB-dan böyükdür');
   const path=S.rest.id+'/'+crypto.randomUUID()+'.'+ext;
   const r=await db.storage.from('media').upload(path,blob,{contentType:blob.type||file.type,cacheControl:'31536000'});
@@ -354,6 +354,7 @@ look:()=>{
   <div class="card"><h2>Şrift</h2><label>Restoran adı və başlıqlar üçün<select id="f_font"><option value="">Standart (Almendra)</option>${fl.filter(f=>f!=='Almendra').map(f=>`<option ${f===cur?'selected':''}>${esc(f)}</option>`).join('')}</select></label></div>
   <div class="card"><h2>Logo</h2><p class="muted" style="margin:0">Logonun fonu qara və ya ağdırsa, fon avtomatik silinir və kənar boşluqlar kəsilir.</p>${mediaBox('logo','Logo şəkli',t.logo_url)}
    <label>Logo ölçüsü: <b id="lsv">${t.logo_size||100}</b> px<input type="range" id="f_lsize" min="40" max="220" value="${t.logo_size||100}"></label></div>
+  <div class="card"><h2>Üz qabığı şəkli</h2><p class="muted" style="margin:0">Menyunun ən yuxarısında göstərilən geniş şəkil (restoranın fasadı və ya interyeri, təxminən 4:1 nisbətində). Yükləsən, yazılı ad yerinə bu şəkil görünür.</p>${mediaBox('cover','Üz qabığı',t.cover_url)}</div>
   <div class="card"><h2>Sekmə ikonu</h2><p class="muted" style="margin:0">Brauzer sekməsində görünən kiçik şəkil. İstəsən öz ikonunu yüklə (kvadrat şəkil yaxşıdır, avtomatik ortadan kəsilir). Yükləməsən, restoranın əsas rəngində standart ikon qalır.</p>${mediaBox('fav','İkon',t.favicon_url)}</div>
   <div class="card"><h2>Fon şəkli (istəyə bağlı)</h2><p class="muted" style="margin:0">Boş qoysan standart tünd fon qalır.</p>${mediaBox('bgimg','Fon şəkli',t.bg_image)}</div>
   <div class="card"><h2>Sifariş</h2><label class="chk"><span class="sw"><input type="checkbox" id="f_oe" ${S.rest.orders_enabled?'checked':''}><span></span></span> Müştərilər menyudan sifariş verə bilsin</label><small>Söndürsən, menyuda yalnız yeməklərə baxmaq olar, səbət və sifariş düyməsi görünmür.</small></div>
@@ -470,7 +471,7 @@ document.addEventListener('click',async e=>{
   if(a==='delitem'){if(confirm('Məhsul silinsin?')&&chk(await db.from('items').delete().eq('id',id))){$('#modal').hidden=true;again('menu')}return}
   if(a==='preset'){const q=b.dataset.p.split('|');$('#f_flame').value=q[1];$('#f_gold').value=q[2];$('#f_bg').value=q[3];$('#f_kraft').value=q[4];let fo=q[5];if(fo&&!(await fontOK(fo))){fo='';toast('Bu üslubun şrifti Azərbaycan hərflərini dəstəkləmir, standart şrift qoyuldu',1)}$('#f_font').value=fo;pvUpdate();return}
   if(a==='savelook'){
-    const th={...(S.rest.theme||{}),flame:v('flame'),gold:v('gold'),bg:v('bg'),kraft:v('kraft')||undefined,font:v('font').trim()||undefined,logo_url:v('logo')||undefined,logo_size:(+v('lsize')&&+v('lsize')!==100)?+v('lsize'):undefined,bg_image:v('bgimg')||undefined,favicon_url:v('fav')||undefined,unlisted:$('#f_lst')?($('#f_lst').checked?undefined:true):(S.rest.theme||{}).unlisted};
+    const th={...(S.rest.theme||{}),flame:v('flame'),gold:v('gold'),bg:v('bg'),kraft:v('kraft')||undefined,font:v('font').trim()||undefined,logo_url:v('logo')||undefined,logo_size:(+v('lsize')&&+v('lsize')!==100)?+v('lsize'):undefined,bg_image:v('bgimg')||undefined,favicon_url:v('fav')||undefined,cover_url:v('cover')||undefined,unlisted:$('#f_lst')?($('#f_lst').checked?undefined:true):(S.rest.theme||{}).unlisted};
     const o={theme:JSON.parse(JSON.stringify(th)),orders_enabled:$('#f_oe').checked};
     if(S.p.role==='admin'){o.theme_key=v('tk').trim()||'default';o.name=v('nm').trim()||S.rest.name}
     if(chk(await db.from('restaurants').update(o).eq('id',rid))){Object.assign(S.rest,o);topbar();toast('Saxlanıldı')}return}
