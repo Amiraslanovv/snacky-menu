@@ -173,12 +173,40 @@ body.hasbar #up{bottom:96px}
  #dbox.wide .dimg{aspect-ratio:16/9;height:auto;min-height:0}
  #dbox.wide .dbody{max-height:none;overflow:visible}
 }
+/* üz qabığı şəkli (istənilən restoran üçün) */
+#cover{position:relative;margin:calc(env(safe-area-inset-top,0px) + 12px) 0 6px;border-radius:20px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.5)}
+#cover img{display:block;width:100%;height:auto}
+#cover::after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 62%,rgba(0,0,0,.55));pointer-events:none}
+.hascover header{padding:0;height:0;overflow:hidden}
+.hascover .logo{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* SNACKY: interyer və fasaddan götürülmüş üslub. Qara divar, kəhrəba lampa işığı, kraft qutular, bənövşəyi neon */
+body[data-theme="snacky"]::before{background-image:var(--bgimg,linear-gradient(transparent,transparent)),radial-gradient(900px 520px at 50% -160px,rgba(255,150,40,.30),transparent 70%),radial-gradient(760px 640px at 108% 108%,rgba(122,92,255,.27),transparent 70%),radial-gradient(620px 520px at -8% 96%,rgba(60,220,140,.12),transparent 70%),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23g%29'/%3E%3C/svg%3E");background-size:cover,auto,auto,auto,220px 220px;background-repeat:no-repeat,no-repeat,no-repeat,no-repeat,repeat;background-position:center,center,center,center,0 0}
+body[data-theme="snacky"] .sh h2{color:#ffd9a0;letter-spacing:.3em;text-shadow:0 0 5px rgba(255,190,90,.95),0 0 16px rgba(255,140,30,.65),0 0 34px rgba(255,120,20,.4)}
+body[data-theme="snacky"] .sh i{height:8px;background:radial-gradient(circle,#ffd9a0 1.7px,transparent 2.6px) 0 50%/13px 8px repeat-x;filter:drop-shadow(0 0 3px rgba(255,170,60,.85));animation:bulb 1.6s ease-in-out infinite alternate}
+body[data-theme="snacky"] .sh i:last-child{animation-delay:.8s}
+@keyframes bulb{from{opacity:.55}to{opacity:1}}
+body[data-theme="snacky"] #cats a.on{border-color:#ffc25a;box-shadow:0 0 14px rgba(255,170,60,.45)}
+body[data-theme="snacky"] .card{aspect-ratio:auto;display:flex;flex-direction:column;border:0;border-radius:18px;background:transparent;overflow:visible;filter:drop-shadow(0 12px 14px rgba(0,0,0,.5))}
+body[data-theme="snacky"] .card:hover{transform:translateY(-4px)}
+body[data-theme="snacky"] .card .img{position:relative;inset:auto;aspect-ratio:1/1;border-radius:18px 18px 0 0;overflow:hidden}
+body[data-theme="snacky"] .card .img::after{display:none}
+body[data-theme="snacky"] .card .cp{position:relative;left:auto;right:auto;bottom:auto;flex:1;margin-top:-8px;padding:20px 14px 13px;border-radius:0 0 18px 18px;color:#241506;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='k'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .25 0 0 0 0 .14 0 0 0 0 .05 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23k%29'/%3E%3C/svg%3E"),linear-gradient(180deg,#d8aa72,#bd8c57);-webkit-mask:radial-gradient(circle at 50% 100%,#000 7px,transparent 7.6px) 0 0/16px 8px repeat-x,linear-gradient(#000 0 0) 0 7px/100% calc(100% - 7px) no-repeat;mask:radial-gradient(circle at 50% 100%,#000 7px,transparent 7.6px) 0 0/16px 8px repeat-x,linear-gradient(#000 0 0) 0 7px/100% calc(100% - 7px) no-repeat}
+body[data-theme="snacky"] .card .cp h3{color:#241506;text-shadow:none;font-weight:700}
+body[data-theme="snacky"] .card .pl b{color:#5a1a08;font-weight:800}
+body[data-theme="snacky"] .card .pl s{color:rgba(36,21,6,.55)}
+body[data-theme="snacky"] .tcard{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='k'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .25 0 0 0 0 .14 0 0 0 0 .05 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23k%29'/%3E%3C/svg%3E"),linear-gradient(180deg,#d8aa72,#bd8c57);border:0;color:#241506}
+body[data-theme="snacky"] .tcard h2{color:#241506}
+body[data-theme="snacky"] .tcard .pr.big{background:#241506;border-color:#ffd9a0;color:#ffd9a0}
+body[data-theme="snacky"] .tcard .pr.big s{color:rgba(255,217,160,.6)}
+body[data-theme="snacky"] .tg .tl small{color:#ffd9a0}
 </style>
 </head>
 <body>
 <div id="splash" aria-hidden="true"><div class="sp"><svg class="ring" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46"/></svg><div id="spi"></div></div><p id="spt">Menyu hazırlanır<span class="dts"><i>.</i><i>.</i><i>.</i></span></p></div>
 <div class="wrap">
   <header><h1 class="logo" id="brand"></h1></header>
+  <div id="cover" hidden><img id="coverimg" alt=""></div>
   <nav id="cats" aria-label="Kateqoriyalar" hidden></nav>
   <main id="menu"><p class="msg">Yüklənir...</p></main>
   <footer id="foot"></footer>
@@ -251,6 +279,7 @@ function applyTheme(r){
   if(th.font&&!document.getElementById('thf')){const l=document.createElement('link');l.id='thf';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(th.font).replace(/%20/g,'+')+'&display=swap';l.onload=()=>fontOK(th.font).then(ok=>{if(ok)document.documentElement.style.setProperty('--display',`'${th.font}',Georgia,serif`)});document.head.appendChild(l)}
   if(th.bg_image)document.documentElement.style.setProperty('--bgimg','url("'+th.bg_image.replace(/["\\()]/g,'')+'")');
   $('fav').href=th.favicon_url||stdIcon(th.flame||'#f2661f');
+  if(th.cover_url){$('cover').hidden=false;$('coverimg').src=th.cover_url;document.body.classList.add('hascover')}
   $('brand').innerHTML=th.logo_url?`<img src="${esc(th.logo_url)}" alt="${esc(r.name)}">`:esc(r.name);
   $('foot').textContent=(table?'Masa '+table:'');
 }
