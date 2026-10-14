@@ -249,14 +249,18 @@ function hideSplash(){
 let REVT=0;
 function stopRev(){REVT++;cancelAnimationFrame(REV)}
 function rev(v,done){
-  stopRev();v.pause();const my=REVT;let last=performance.now();
+  stopRev();v.pause();const my=REVT;let last=performance.now(),slow=0;
   const step=()=>{
     if(my!==REVT)return;
     const n=performance.now(),dt=(n-last)/1000*1.6;last=n;
     const t=v.currentTime-dt;
     if(t<=.05){v.currentTime=0;if(done)done();return}
-    let went=false;
-    const go=()=>{if(went||my!==REVT)return;went=true;clearTimeout(tm);REV=requestAnimationFrame(step)};
+    let went=false;const t0=performance.now();
+    const go=()=>{
+      if(went||my!==REVT)return;went=true;clearTimeout(tm);
+      /* geri çəkmə ləngdirsə (video ağırdır), donmasın deyə dayandırıb yumşaq soldururuq */
+      if(performance.now()-t0>110){if(++slow>=2){v.currentTime=0;if(done)done();return}}
+      REV=requestAnimationFrame(step)};
     const tm=setTimeout(go,350);
     v.addEventListener('seeked',go,{once:true});
     v.currentTime=t;
