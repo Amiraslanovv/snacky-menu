@@ -169,9 +169,9 @@ body.hasbar #up{bottom:96px}
  #dbox .dimg{aspect-ratio:auto;height:100%;min-height:540px}
  #dbox .dbody{overflow:auto;max-height:90vh;padding:28px}
  #dbox .x{left:14px;right:auto}
- #dbox.wide{grid-template-columns:1fr;overflow:auto}
- #dbox.wide .dimg{aspect-ratio:16/9;height:auto;min-height:0}
- #dbox.wide .dbody{max-height:none;overflow:visible}
+ #dbox.wide{grid-template-columns:1.4fr .9fr;overflow:hidden;background:#000}
+ #dbox.wide .dimg{aspect-ratio:16/9;height:auto;min-height:0;align-self:center}
+ #dbox.wide .dbody{max-height:90vh;overflow:auto;background:var(--bg)}
 }
 /* üz qabığı şəkli (istənilən restoran üçün) */
 #cover{position:relative;margin:calc(env(safe-area-inset-top,0px) + 12px) 0 6px;border-radius:20px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.5)}
@@ -200,6 +200,11 @@ body[data-theme="snacky"] .tcard h2{color:#241506}
 body[data-theme="snacky"] .tcard .pr.big{background:#241506;border-color:#ffd9a0;color:#ffd9a0}
 body[data-theme="snacky"] .tcard .pr.big s{color:rgba(255,217,160,.6)}
 body[data-theme="snacky"] .tg .tl small{color:#ffd9a0}
+/* Snacky loqosu: divardakı lampa hərfləri kimi. Loqo şəkli yüklənibsə, o göstərilir (işıq halqası ilə) */
+body[data-theme="snacky"] .logo:not(.imglogo){font:800 clamp(56px,15vw,104px)/1.05 var(--body);letter-spacing:.06em;text-transform:uppercase;padding:.04em .1em .1em;background:radial-gradient(circle,#fff3d2 0 1.9px,#ffc15e 3px,rgba(255,150,40,0) 4.4px) 0 0/9px 9px,linear-gradient(rgba(70,34,6,.62),rgba(70,34,6,.62));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 5px rgba(255,170,60,.9)) drop-shadow(0 0 20px rgba(255,120,20,.5));animation:flick 6s infinite}
+@keyframes flick{0%,100%{opacity:1}46%{opacity:1}48%{opacity:.8}50%{opacity:1}}
+body[data-theme="snacky"] .logo img{filter:drop-shadow(0 0 12px rgba(255,160,50,.5))}
+@media (prefers-reduced-motion:reduce){body[data-theme="snacky"] .logo{animation:none!important}}
 </style>
 </head>
 <body>
@@ -280,6 +285,7 @@ function applyTheme(r){
   if(th.bg_image)document.documentElement.style.setProperty('--bgimg','url("'+th.bg_image.replace(/["\\()]/g,'')+'")');
   $('fav').href=th.favicon_url||stdIcon(th.flame||'#f2661f');
   if(th.cover_url){$('cover').hidden=false;$('coverimg').src=th.cover_url;document.body.classList.add('hascover')}
+  $('brand').classList.toggle('imglogo',!!th.logo_url);
   $('brand').innerHTML=th.logo_url?`<img src="${esc(th.logo_url)}" alt="${esc(r.name)}">`:esc(r.name);
   $('foot').textContent=(table?'Masa '+table:'');
 }
