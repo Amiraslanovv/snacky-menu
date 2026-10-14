@@ -46,6 +46,7 @@ section h2{font-family:var(--display);font-size:30px;color:var(--gold);margin:26
 .ex{position:absolute;inset:0;background:#000;opacity:0;transition:opacity .6s;pointer-events:none}
 .ex.on{opacity:1}
 .ex img,.ex video{width:100%;height:100%;object-fit:contain}
+.ex video{transform:translateZ(0);will-change:transform;background:#000}
 .x{position:absolute;right:12px;top:12px;z-index:2;width:40px;height:40px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:24px;cursor:pointer}
 .dbody{padding:16px 16px calc(env(safe-area-inset-bottom,0) + 24px)}
 .dbody .row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
@@ -244,11 +245,23 @@ function hideSplash(){
   const ready=Promise.race([Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))),new Promise(r=>setTimeout(r,2500))]);
   ready.then(()=>setTimeout(()=>$('splash').classList.add('off'),Math.max(0,SPLASH_MIN-(performance.now()-T0))));
 }
-/* videonu tərsinə oynat: sondan başa (brauzerlər geri oxutmağı birbaşa bilmir, kadr-kadr geri çəkirik) */
+/* videonu tərsinə oynat: hər kadr "seeked" olandan sonra növbəti kadra keçirik (donma olmasın deyə), sürət real vaxta görə hesablanır */
+let REVT=0;
+function stopRev(){REVT++;cancelAnimationFrame(REV)}
 function rev(v,done){
-  cancelAnimationFrame(REV);v.pause();let last=performance.now();
-  const step=n=>{const dt=(n-last)/1000;last=n;const t=v.currentTime-dt;if(t<=.03){v.currentTime=0;if(done)done();return}v.currentTime=t;REV=requestAnimationFrame(step)};
-  REV=requestAnimationFrame(step);
+  stopRev();v.pause();const my=REVT;let last=performance.now();
+  const step=()=>{
+    if(my!==REVT)return;
+    const n=performance.now(),dt=(n-last)/1000*1.6;last=n;
+    const t=v.currentTime-dt;
+    if(t<=.05){v.currentTime=0;if(done)done();return}
+    let went=false;
+    const go=()=>{if(went||my!==REVT)return;went=true;clearTimeout(tm);REV=requestAnimationFrame(step)};
+    const tm=setTimeout(go,350);
+    v.addEventListener('seeked',go,{once:true});
+    v.currentTime=t;
+  };
+  step();
 }
 const cart={};let R,ITEMS=[],CATS=[],canOrder=false,CUR=null,TOP=[];
 const fail=t=>{SPL=true;$('splash').classList.add('off');$('menu').innerHTML=`<p class="msg">${esc(t)}<br><br><a href="/" style="color:var(--gold)">menyum.me</a></p>`};
@@ -371,15 +384,15 @@ document.addEventListener('click',e=>{
   const t=e.target;let b;
   if(b=t.closest('[data-a]')){const id=b.dataset.id;cart[id]=Math.max(0,(cart[id]||0)+(b.dataset.a==='+'?1:-1));repaint();paintBar();if(!$('sheet').hidden)openSheet();return}
   if(b=t.closest('[data-open]')){openDet(b.dataset.open);return}
-  if(t.closest('[data-close]')||t.id==='det'){cancelAnimationFrame(REV);$('det').hidden=true;lock();return}
+  if(t.closest('[data-close]')||t.id==='det'){stopRev();$('det').hidden=true;lock();return}
   if(t.closest('[data-close2]')||t.id==='sheet'){$('sheet').hidden=true;lock();return}
   if(b=t.closest('[data-ing]')){const ex=$('ex'),st=$('stk');
     if(ex){
       const v=ex.querySelector('video');
       if(!v){const on=ex.classList.toggle('on');setTg(b,on)}
       else{
-        cancelAnimationFrame(REV);
-        if(b.dataset.o!=='1'){b.dataset.o='1';setTg(b,1);ex.classList.add('on');v.play()}
+        stopRev();
+        if(b.dataset.o!=='1'){b.dataset.o='1';setTg(b,1);ex.classList.add('on');const pp=v.play();if(pp&&pp.catch)pp.catch(()=>{})}
         else{b.dataset.o='0';setTg(b,0);rev(v,()=>ex.classList.remove('on'))}
       }
     }
