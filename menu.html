@@ -206,6 +206,11 @@ body[data-theme="snacky"] .logo:not(.imglogo){font:800 clamp(56px,15vw,104px)/1.
 @keyframes flick{0%,100%{opacity:1}46%{opacity:1}48%{opacity:.8}50%{opacity:1}}
 body[data-theme="snacky"] .logo img{filter:drop-shadow(0 0 12px rgba(255,160,50,.5))}
 @media (prefers-reduced-motion:reduce){body[data-theme="snacky"] .logo{animation:none!important}}
+/* eyni ölçülü kartlar */
+.grid{grid-auto-rows:1fr;align-items:stretch}
+.card .cp h3{min-height:2.44em}
+.card .pl{min-height:24px}
+.card .img img{width:100%;height:100%;object-fit:cover;object-position:center}
 </style>
 </head>
 <body>
@@ -349,7 +354,7 @@ function openDet(id){
   const x=ITEMS.find(i=>i.id===id);if(!x)return;CUR=x;
   api('events',{m:'POST',h:MIN,b:{restaurant_id:R.id,type:'item_view',item_id:id}});
   const ing=x.ingredients||[];
-  const wide=/\.(mp4|webm)(\?|$)/i.test(x.explode_url||'');
+  const wide=true; /* bütün məhsullar eyni detal düzümündə açılır (16:9 şəkil/video) */
   $('dbox').className=wide?'wide':'';
   $('dbox').innerHTML=`<button class="x" data-close aria-label="Bağla">×</button><div class="dimg${wide?' wide':''}">${art(x)}${x.explode_url?`<div class="ex" id="ex">${media(x.explode_url)}</div>`:''}</div><div class="dbody">
   <div class="tcard"><h2>${esc(x.name)}</h2>${priceBig(x)}</div>
@@ -397,7 +402,9 @@ document.addEventListener('click',e=>{
       else{
         stopRev();
         if(b.dataset.o!=='1'){b.dataset.o='1';setTg(b,1);ex.classList.add('on');const pp=v.play();if(pp&&pp.catch)pp.catch(()=>{})}
-        else{b.dataset.o='0';setTg(b,0);rev(v,()=>ex.classList.remove('on'))}
+        else{b.dataset.o='0';setTg(b,0);
+          if(matchMedia('(pointer:coarse)').matches){ex.classList.remove('on');setTimeout(()=>{if(b.dataset.o!=='1'){v.pause();v.currentTime=0}},700)}
+          else rev(v,()=>ex.classList.remove('on'))}
       }
     }
     else if(st){const o=st.hidden;st.hidden=!o;setTg(b,o);if(o)st.innerHTML=CUR.ingredients.map((v,i)=>`<div class="ing" style="animation-delay:${i*130}ms"><span>${esc(ingOf(v).n)}</span></div>`).join('')}
