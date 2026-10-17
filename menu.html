@@ -231,6 +231,13 @@ body.hasbar #fab{bottom:88px}
 .alg .chips{margin:6px 0}
 .chips span.al{border-color:var(--kraft);color:var(--gold);background:rgba(233,180,95,.1);font-weight:600}
 .alnote{margin:2px 0 0;color:var(--muted);font-size:12.5px;line-height:1.4}
+.fv{position:absolute;right:10px;top:52px;z-index:3;width:34px;height:34px;padding:0;border:0;border-radius:50%;background:rgba(10,10,14,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;display:grid;place-items:center;cursor:pointer}
+.fv.solo{top:10px}
+.fv svg,.favb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fv.on{color:var(--flame)}
+.fv.on svg,.favb.on svg{fill:currentColor}
+.favb{display:flex;width:100%;justify-content:center;align-items:center;gap:8px;margin:10px 0 0;padding:12px;border:1px solid var(--line);border-radius:14px;background:transparent;color:var(--ink);font:600 15px var(--body);cursor:pointer}
+.favb.on{border-color:var(--flame);color:var(--flame)}
 </style>
 </head>
 <body>
@@ -254,6 +261,21 @@ const SPLASH_MIN=1200,T0=performance.now();   /* açılış ekranı ən azı bu 
 const SB_URL='https://qybeegkeowpdkdmzoryj.supabase.co',SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5YmVlZ2tlb3dwZGtkbXpvcnlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMDk5NjYsImV4cCI6MjEwNjg4NTk2Nn0.MQ5iDWLxUXiKy3qbzAh6AbdxXeJyTfRVQ1hkYOw7n5o';
 const api=(p,o={})=>fetch(SB_URL+'/rest/v1/'+p,{method:o.m||'GET',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json',...(o.h||{})},body:o.b?JSON.stringify(o.b):undefined});
 const MIN={Prefer:'return=minimal'};
+/* sevdiklərim (yalnız bu cihazda saxlanır) */
+const HEART='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+let FAV=[];
+function loadFav(){try{FAV=JSON.parse(localStorage.getItem('fav_'+slug)||'[]')}catch(e){FAV=[]}if(!Array.isArray(FAV))FAV=[]}
+function saveFav(){try{localStorage.setItem('fav_'+slug,JSON.stringify(FAV))}catch(e){}}
+const isFav=id=>FAV.includes(id);
+const favBtn=id=>`<button class="fv${canOrder?'':' solo'}${isFav(id)?' on':''}" type="button" data-fav="${id}" aria-label="Sevdiklərimə əlavə et" aria-pressed="${isFav(id)}">${HEART}</button>`;
+function toggleFav(id,from){
+  const i=FAV.indexOf(id);if(i<0)FAV.push(id);else FAV.splice(i,1);saveFav();
+  const card=from&&from.closest('.card'),sec=card&&card.closest('section'),h=sec&&sec.querySelector('h2'),title=h&&h.textContent,top0=card?card.getBoundingClientRect().top:0;
+  render();repaint();paintBar();
+  /* basdığın kart ekranda eyni yerdə qalsın */
+  if(card&&title){const s2=[...document.querySelectorAll('#menu section')].find(x=>{const t=x.querySelector('h2');return t&&t.textContent===title});const c2=s2&&s2.querySelector('.card[data-open="'+id+'"]');if(c2)window.scrollBy({top:c2.getBoundingClientRect().top-top0,left:0,behavior:'instant'})}
+  document.querySelectorAll('.favb[data-fav="'+id+'"]').forEach(b=>{b.classList.toggle('on',isFav(id));const sp=b.querySelector('span');if(sp)sp.textContent=isFav(id)?'Sevdiklərimdədir':'Sevdiklərimə əlavə et'});
+}
 /* sifariş statusu */
 let ORD=null;try{ORD=JSON.parse(sessionStorage.getItem('menyum_ord')||'null')}catch(e){}
 const saveOrd=()=>{try{ORD?sessionStorage.setItem('menyum_ord',JSON.stringify(ORD)):sessionStorage.removeItem('menyum_ord')}catch(e){}};
@@ -371,7 +393,7 @@ async function init(){
   }catch(e){ if(!cached) fail('Bağlantı xətası. Yenidən yoxla.') }
 }
 function show(d){
-  R=d;canOrder=!!d.orders_enabled;ITEMS=d.items||[];CATS=d.categories||[];
+  R=d;loadFav();canOrder=!!d.orders_enabled;ITEMS=d.items||[];CATS=d.categories||[];
   applyTheme(d);render();repaint();paintBar();hideSplash();
   if(show.t!==d.id){show.t=d.id;api('rpc/top_items',{m:'POST',b:{rid:d.id,n:3}}).then(r=>r.json()).then(a=>{if(Array.isArray(a)){TOP=a.map(x=>x.item_id);render();repaint();paintBar()}}).catch(()=>{})}
 }
@@ -401,7 +423,7 @@ const BADGE_COL={'Yeni':'#1fb36b','Sevilən':'#e5486c','Şefin seçimi':'#8a5cf5
 const bdg=b=>`<span class="rb" style="background:${BADGE_COL[b]||'var(--gold)'}">${esc(b)}</span>`;
 const badgesOf=x=>[...(x.badges||[]),...(TOP.includes(x.id)?['Ən çox sifariş edilən']:[])].slice(0,2).map(bdg).join('');
 const priceBig=x=>{const d=disc(x);return `<span class="pr big${d?' dc':''}">${d?`<s>${money(d.o)}</s>`:''}${money(+x.price)} ${esc(R.currency)}</span>`};
-const card=x=>{const d=disc(x),cu=esc(R.currency);return `<article class="card" data-open="${x.id}"><div class="img">${art(x)}</div>${qtyDiv(x.id)}<div class="rbs">${badgesOf(x)}</div><div class="cp"><h3>${esc(x.name)}</h3><div class="pl"><b>${money(+x.price)}<i class="cu">${cu}</i></b>${d?`<s>${money(d.o)}</s><em>−${d.pct}%</em>`:''}</div></div></article>`};
+const card=x=>{const d=disc(x),cu=esc(R.currency);return `<article class="card" data-open="${x.id}"><div class="img">${art(x)}</div>${qtyDiv(x.id)}${favBtn(x.id)}<div class="rbs">${badgesOf(x)}</div><div class="cp"><h3>${esc(x.name)}</h3><div class="pl"><b>${money(+x.price)}<i class="cu">${cu}</i></b>${d?`<s>${money(d.o)}</s><em>−${d.pct}%</em>`:''}</div></div></article>`};
 function render(){
   const known=new Set(CATS.map(c=>c.id));
   const groups=CATS.map(c=>({n:c.name,note:c.note,its:ITEMS.filter(x=>x.category_id===c.id)}));
@@ -410,6 +432,8 @@ function render(){
   const gs=groups.filter(g=>g.its.length);
   const tops=TOP.map(id=>ITEMS.find(x=>x.id===id)).filter(Boolean);
   if(tops.length>=2)gs.unshift({n:'Ən çox sifariş edilənlər',its:tops});
+  const favs=FAV.map(id=>ITEMS.find(x=>x.id===id)).filter(Boolean);
+  if(favs.length)gs.unshift({n:'Sevdiklərim',its:favs});
   const th=g=>{const x=g.its.find(i=>i.image_url);return x?`<img src="${esc(x.image_url)}" alt="" loading="lazy">`:esc((g.n||'?').trim().charAt(0).toUpperCase())};
   $('cats').innerHTML=gs.length>1?gs.map((g,i)=>`<a href="#s${i}" data-i="${i}"><span class="th">${th(g)}</span>${esc(g.n)}</a>`).join(''):'';
   $('cats').hidden=gs.length<2;
@@ -439,6 +463,7 @@ function openDet(id){
   $('dbox').className=wide?'wide':'';
   $('dbox').innerHTML=`<button class="x" data-close aria-label="Bağla">×</button><div class="dimg${wide?' wide':''}">${art(x)}${x.explode_url?`<div class="ex" id="ex">${media(x.explode_url)}</div>`:''}</div><div class="dbody">
   <div class="tcard"><h2>${esc(x.name)}</h2>${priceBig(x)}</div>
+  <button class="favb${isFav(x.id)?' on':''}" type="button" data-fav="${x.id}">${HEART}<span>${isFav(x.id)?'Sevdiklərimdədir':'Sevdiklərimə əlavə et'}</span></button>
   ${(x.explode_url||ing.length)?`<button class="tg" type="button" data-ing><span class="ti"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/></svg></span><span class="tl"><small>Tərkib</small><b class="tt">Tərkibi aç</b></span><span class="tch"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span></button>${x.explode_url?'':'<div id="stk" hidden></div>'}`:''}
   ${x.description?`<p class="desc">${esc(x.description)}</p>`:''}
   ${(x.allergens&&x.allergens.length)?`<div class="alg"><small>Allergenlər</small><div class="chips">${x.allergens.map(a=>`<span class="al">${esc(a)}</span>`).join('')}</div><p class="alnote">Ciddi allergiyan varsa, sifariş verməzdən əvvəl ofisiantla dəqiqləşdir.</p></div>`:''}
@@ -476,6 +501,7 @@ async function send(){
 }
 document.addEventListener('click',e=>{
   const t=e.target;let b;
+  if(b=t.closest('[data-fav]')){toggleFav(b.dataset.fav,b);return}
   if(b=t.closest('[data-a]')){const id=b.dataset.id;cart[id]=Math.max(0,(cart[id]||0)+(b.dataset.a==='+'?1:-1));repaint();paintBar();if(!$('sheet').hidden)openSheet();return}
   if(b=t.closest('[data-open]')){openDet(b.dataset.open);return}
   if(t.closest('[data-close]')||t.id==='det'){stopRev();$('det').hidden=true;lock();return}
