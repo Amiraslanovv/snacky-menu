@@ -284,6 +284,12 @@ const mediaBox=(k,label,url,video)=>`<div class="mbx"><b>${label}</b><div class=
 /* ---------- görünüşlər ---------- */
 const BADGES=['Yeni','Sevilən','Şefin seçimi','Kombo','Acı','Vegetarian'];
 const BADGE_COL={'Yeni':'#1fb36b','Sevilən':'#e5486c','Şefin seçimi':'#8a5cf5','Kombo':'#2f7de1','Acı':'#e0301e','Vegetarian':'#3f9b4a'};
+const ALLERGENS=['Qluten','Süd','Yumurta','Fıstıq','Qoz-fındıq','Soya','Balıq','Dəniz məhsulları','Küncüt','Xardal'];
+let AL=[];
+function alPaint(){
+  const el=$('#albox');if(!el)return;
+  el.innerHTML=`<div class="bds">${ALLERGENS.map(a=>`<button type="button" class="bp${AL.includes(a)?' on':''}" style="--c:#c77d1a" data-act="alt" data-b="${a}">${a}</button>`).join('')}</div>`;
+}
 let BD=[];
 function bdPaint(){
   const el=$('#bdbox');if(!el)return;
@@ -415,18 +421,19 @@ async function mv(t,id,dir){
 }
 function openEdit(id){
   const d=S.C[key('menu')],x=d?.items.find(i=>i.id===id);if(!x)return;
-  BD=(x.badges||[]).slice();
+  BD=(x.badges||[]).slice();AL=(x.allergens||[]).slice();
   $('#modal').innerHTML=`<div class="mb"><div class="mh"><h2>Məhsulu redaktə et</h2><button data-act="mclose">Bağla</button></div>
   <div class="g2"><label>Ad<input id="f_name" value="${esc(x.name)}"></label><label>Qiymət (${esc(S.rest.currency)})<input id="f_price" type="number" step="0.01" value="${x.price}"></label><label>Çəki / həcm<input id="f_weight" value="${esc(x.weight||'')}" placeholder="250 q"></label><label>Kalori (kkal)<input id="f_cal" type="number" value="${x.calories??''}"></label></div>
   <label>Kateqoriya<select id="f_cat">${d.cats.map(c=>`<option value="${c.id}" ${c.id===x.category_id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>
   <label>Təsvir<textarea id="f_desc" rows="2">${esc(x.description||'')}</textarea></label>
   <div class="g2"><label>Köhnə qiymət (endirim və ya kombo qənaəti göstərmək üçün)<input id="f_old" type="number" step="0.01" value="${x.old_price??''}"></label><div></div></div>
   <div style="margin-top:12px"><small>Nişanlar: nə ardıcıllıqla toxunsan, menyuda o sırada görünür (1, 2, 3). Sırani dəyişmək üçün "Seçimi təmizlə" basıb istədiyin ardıcıllıqla yenidən toxun.</small><div id="bdbox"></div></div>
+  <div style="margin-top:12px"><small>Allergenlər: bu yeməkdə olanları seç. Seçilmişlər müştəriyə yeməyin detalında göstərilir. Heç nə seçməsən, bölmə görünmür.</small><div id="albox"></div></div>
   <label>Tərkib (hər sətirdə biri, emojisiz)<textarea id="f_ing" rows="4">${esc((x.ingredients||[]).map(s=>s.replace(/^\p{Extended_Pictographic}\S*\s+/u,'')).join('\n'))}</textarea></label>
   ${mediaBox('image','Yeməyin şəkli',x.image_url)}${mediaBox('explode','Tərkib animasiyası (şəkil, GIF və ya MP4, ən çox 10 MB)',x.explode_url,true)}
   <label class="chk"><span class="sw"><input type="checkbox" id="f_av" ${x.available?'checked':''}><span></span></span> Menyuda göstərilir</label>
   <div class="mf"><button class="d" data-act="delitem" data-id="${id}">Məhsulu sil</button><span><button data-act="mclose">Ləğv</button> <button class="p" data-act="saveitem" data-id="${id}">Saxla</button></span></div></div>`;
-  $('#modal').hidden=false;bdPaint();
+  $('#modal').hidden=false;bdPaint();alPaint();
 }
 
 /* ---------- hadisələr ---------- */
@@ -456,6 +463,7 @@ document.addEventListener('click',async e=>{
   if(a==='st'){if(chk(await db.from('orders').update({status:b.dataset.v}).eq('id',id)))again();return}
   if(a==='bdt'){const n=b.dataset.b,i=BD.indexOf(n);if(i<0)BD.push(n);else BD.splice(i,1);bdPaint();return}
   if(a==='bdc'){BD=[];bdPaint();return}
+  if(a==='alt'){const n=b.dataset.b,i=AL.indexOf(n);if(i<0)AL.push(n);else AL.splice(i,1);alPaint();return}
   if(a==='wa'){window.open('https://wa.me/?text='+encodeURIComponent(report(S.C[key('stats')])),'_blank');return}
   if(a==='cpy'){try{await navigator.clipboard.writeText(report(S.C[key('stats')]));toast('Kopyalandı')}catch(e){toast('Kopyalanmadı',1)}return}
   if(a==='mv'){await mv(b.dataset.t,id,+b.dataset.d);return}
@@ -466,7 +474,7 @@ document.addEventListener('click',async e=>{
     const r=await db.from('items').insert({restaurant_id:rid,category_id:id,name:'Yeni məhsul',price:0,sort:(S.C[key('menu')]?.items.length||0)+1}).select().single();
     if(chk(r)){S.C[key('menu')].items.push(r.data);paint();openEdit(r.data.id)}return}
   if(a==='saveitem'){
-    const o={name:v('name').trim()||'Məhsul',price:+v('price')||0,weight:v('weight').trim()||null,calories:v('cal')===''?null:+v('cal'),category_id:v('cat')||null,description:v('desc').trim()||null,ingredients:v('ing').split('\n').map(s=>s.trim()).filter(Boolean),available:$('#f_av').checked,image_url:v('image')||null,explode_url:v('explode')||null,badges:BD.slice(),old_price:v('old')===''?null:+v('old')};
+    const o={name:v('name').trim()||'Məhsul',price:+v('price')||0,weight:v('weight').trim()||null,calories:v('cal')===''?null:+v('cal'),category_id:v('cat')||null,description:v('desc').trim()||null,ingredients:v('ing').split('\n').map(s=>s.trim()).filter(Boolean),available:$('#f_av').checked,image_url:v('image')||null,explode_url:v('explode')||null,badges:BD.slice(),allergens:AL.slice(),old_price:v('old')===''?null:+v('old')};
     if(chk(await db.from('items').update(o).eq('id',id))){toast('Saxlanıldı');$('#modal').hidden=true;again('menu')}return}
   if(a==='delitem'){if(confirm('Məhsul silinsin?')&&chk(await db.from('items').delete().eq('id',id))){$('#modal').hidden=true;again('menu')}return}
   if(a==='preset'){const q=b.dataset.p.split('|');$('#f_flame').value=q[1];$('#f_gold').value=q[2];$('#f_bg').value=q[3];$('#f_kraft').value=q[4];let fo=q[5];if(fo&&!(await fontOK(fo))){fo='';toast('Bu üslubun şrifti Azərbaycan hərflərini dəstəkləmir, standart şrift qoyuldu',1)}$('#f_font').value=fo;pvUpdate();return}
