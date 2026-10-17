@@ -238,6 +238,8 @@ body.hasbar #fab{bottom:88px}
 .fv.on svg,.favb.on svg{fill:currentColor}
 .favb{display:flex;width:100%;justify-content:center;align-items:center;gap:8px;margin:10px 0 0;padding:12px;border:1px solid var(--line);border-radius:14px;background:transparent;color:var(--ink);font:600 15px var(--body);cursor:pointer}
 .favb.on{border-color:var(--flame);color:var(--flame)}
+#qrnote{margin:10px 0 0;padding:12px 16px;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;background:var(--card);color:var(--ink);font:500 14.5px/1.4 var(--body)}
+#qrnote[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -245,6 +247,7 @@ body.hasbar #fab{bottom:88px}
 <div class="wrap">
   <header><h1 class="logo" id="brand"></h1></header>
   <div id="cover" hidden><img id="coverimg" alt=""></div>
+  <p id="qrnote" hidden>Sifariş vermək üçün masadakı QR kodu oxut. İndi yalnız menyuya baxa bilərsən.</p>
   <nav id="cats" aria-label="Kateqoriyalar" hidden></nav>
   <main id="menu"><p class="msg">Yüklənir...</p></main>
   <footer id="foot"></footer>
@@ -281,6 +284,7 @@ let ORD=null;try{ORD=JSON.parse(sessionStorage.getItem('menyum_ord')||'null')}ca
 const saveOrd=()=>{try{ORD?sessionStorage.setItem('menyum_ord',JSON.stringify(ORD)):sessionStorage.removeItem('menyum_ord')}catch(e){}};
 const STX={new:'Qəbul gözləyir',preparing:'Hazırlanır',done:'Hazırdır',cancelled:'Ləğv edildi'};
 function paintFab(){
+  paintNote();
   const o=$('ost'),w=$('wcall');if(!o||!w)return;
   const mine=ORD&&R&&ORD.rid===R.id;
   o.hidden=!mine;if(mine)o.textContent='Sifarişin: '+(STX[ORD.st]||STX.new);
@@ -320,8 +324,8 @@ async function callWaiter(){
   const b=$('wcall');b.disabled=true;b.textContent='Göndərilir...';
   let ok=false;
   try{
-    const r=await fetch(SB_URL+'/functions/v1/notify-order',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({call:true,restaurant_id:R.id,table_label:String(table)})});
-    const j=await r.json();ok=!!(j&&j.sent);
+    const r=await fetch(SB_URL+'/functions/v1/notify-order',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({call:true,restaurant_id:R.id,table_label:String(table),token:SESS?SESS.token:null})});
+    const j=await r.json();ok=!!(j&&j.sent);if(!ok&&j&&j.reason==='session'){b.disabled=false;b.textContent='Ofisiantı çağır';dropSession();toast('Sessiya bitib. Sifariş üçün masadakı QR kodu yenidən oxut.','err');return}
   }catch(e){}
   if(!ok){b.disabled=false;b.textContent='Ofisiantı çağır';toast('Çağırış göndərilmədi. Ofisiantı səslə çağır.','err');return}
   WC=Date.now();b.textContent='Ofisiant çağırıldı';toast('Ofisiant çağırıldı, tezliklə gələcək');
@@ -338,7 +342,7 @@ document.addEventListener('click',e=>{
 const q=new URLSearchParams(location.search);
 const seg=location.pathname.split('/').filter(Boolean)[0];
 const slug=(seg&&seg!=='menu.html'?seg:null)||q.get('r');
-const table=q.get('t');
+let table=null,SESS=null;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money=n=>(Math.round(n*100)/100).toFixed(2);
@@ -378,8 +382,33 @@ function rev(v,done){
 const cart={};let R,ITEMS=[],CATS=[],canOrder=false,CUR=null,TOP=[];
 const fail=t=>{SPL=true;$('splash').classList.add('off');$('menu').innerHTML=`<p class="msg">${esc(t)}<br><br><a href="/" style="color:var(--gold)">menyum.me</a></p>`};
 
+/* masa sessiyası: QR-dakı açar yoxlanır, 2 saatlıq sessiya yaranır, açar ünvandan silinir */
+async function ensureSession(){
+  const t=q.get('t'),k=q.get('k');let ss=null;
+  try{ss=JSON.parse(localStorage.getItem('sess_'+slug)||'null')}catch(e){}
+  if(ss&&(!ss.token||ss.exp*1000<Date.now()))ss=null;
+  if(t&&k){
+    try{
+      const r=await api('rpc/start_session',{m:'POST',b:{p_slug:slug,p_t:t,p_k:k}}),j=await r.json();
+      if(j&&j.token){ss={token:j.token,t:String(j.t),exp:j.exp};try{localStorage.setItem('sess_'+slug,JSON.stringify(ss))}catch(e){}}
+      else if(j&&j.error==='bad_key'){window.__badqr=true}
+    }catch(e){}
+    try{const u=new URL(location.href);u.searchParams.delete('k');history.replaceState(null,'',u.pathname+u.search+u.hash)}catch(e){}
+  }
+  SESS=ss;table=ss?ss.t:null;
+  if(window.__badqr&&!ss)setTimeout(()=>toast('Bu QR kodun vaxtı keçib. Ofisianta müraciət et.','err'),600);
+}
+function dropSession(){
+  SESS=null;table=null;try{localStorage.removeItem('sess_'+slug)}catch(e){}
+  canOrder=false;
+  try{$('sheet').hidden=true;lock()}catch(e){}
+  if(R){render();repaint();paintBar()}
+}
+function paintNote(){const n=$('qrnote');if(n)n.hidden=!(R&&R.orders_enabled&&!SESS)}
+setInterval(()=>{if(SESS&&SESS.exp*1000<Date.now()){dropSession();toast('Sessiya bitdi. Sifariş üçün masadakı QR kodu yenidən oxut.','err')}},20000);
 async function init(){
   if(!slug) return fail('Restoran tapılmadı.');
+  await ensureSession();
   let cached=null;
   try{cached=JSON.parse(localStorage.getItem('m_'+slug))}catch(e){}
   if(cached) show(cached);
@@ -393,7 +422,7 @@ async function init(){
   }catch(e){ if(!cached) fail('Bağlantı xətası. Yenidən yoxla.') }
 }
 function show(d){
-  R=d;loadFav();canOrder=!!d.orders_enabled;ITEMS=d.items||[];CATS=d.categories||[];
+  R=d;loadFav();canOrder=!!d.orders_enabled&&!!SESS;ITEMS=d.items||[];CATS=d.categories||[];
   applyTheme(d);render();repaint();paintBar();hideSplash();
   if(show.t!==d.id){show.t=d.id;api('rpc/top_items',{m:'POST',b:{rid:d.id,n:3}}).then(r=>r.json()).then(a=>{if(Array.isArray(a)){TOP=a.map(x=>x.item_id);render();repaint();paintBar()}}).catch(()=>{})}
 }
@@ -489,8 +518,14 @@ async function send(){
   if(!tl){const i=$('tb'),e=$('tbe');if(e)e.hidden=false;if(i){i.classList.remove('bad');void i.offsetWidth;i.classList.add('bad');i.focus()}return}
   const btn=$('send');btn.disabled=true;btn.textContent='Göndərilir...';
   const {t}=totals(),id=crypto.randomUUID();
-  const o=await api('orders',{m:'POST',h:MIN,b:{id,restaurant_id:R.id,table_label:tl,note:$('note').value.trim()||null,total:Math.round(t*100)/100}});
-  if(!o.ok){btn.disabled=false;btn.textContent='Sifarişi göndər';toast('Sifariş göndərilmədi. Bir az sonra yenidən yoxla.','err');return}
+  const o=await api('orders',{m:'POST',h:MIN,b:{id,restaurant_id:R.id,table_label:tl,note:$('note').value.trim()||null,total:Math.round(t*100)/100,session_token:SESS?SESS.token:null}});
+  if(!o.ok){
+    let m='';try{m=((await o.json()).message||'')}catch(e){}
+    btn.disabled=false;btn.textContent='Sifarişi göndər';
+    if(m.includes('session_invalid')){dropSession();toast('Sessiya bitib. Sifariş üçün masadakı QR kodu yenidən oxut.','err');return}
+    if(m.includes('table_blocked')){toast('Bu masadan sifariş müvəqqəti bağlıdır. Ofisianta müraciət et.','err');return}
+    if(m.includes('too_many')){toast('Bu masadan artıq sifariş var. Bir az gözlə.','err');return}
+    toast('Sifariş göndərilmədi. Bir az sonra yenidən yoxla.','err');return}
   await api('order_items',{m:'POST',h:MIN,b:ITEMS.filter(x=>cart[x.id]).map(x=>({order_id:id,item_id:x.id,name:x.name,price:x.price,qty:cart[x.id]}))});
   api('events',{m:'POST',h:MIN,b:{restaurant_id:R.id,type:'order'}});
   /* mətbəxə Telegram bildirişi (cavabı gözləmirik, xəta olsa sifariş təsirlənmir) */
