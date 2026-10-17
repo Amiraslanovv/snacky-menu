@@ -218,6 +218,14 @@ body[data-theme="snacky"] .logo img{filter:drop-shadow(0 0 12px rgba(255,160,50,
 #fab button[hidden]{display:none}
 body.hasbar #fab{bottom:88px}
 .stbig{font-size:22px;font-weight:800;margin:10px 0 6px}
+/* bildiriş (brauzer pəncərəsi əvəzinə) */
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translate(-50%,-16px);opacity:0;pointer-events:none;z-index:90;max-width:min(92vw,420px);width:max-content;background:var(--card);color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;padding:13px 18px;font:500 15px/1.35 var(--body);box-shadow:0 10px 30px rgba(0,0,0,.45);transition:opacity .25s,transform .25s}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast.err{border-left-color:#e5484d}
+.ferr{color:#ff8f8f;font-size:13.5px;margin:6px 2px 0}
+.ferr[hidden]{display:none}
+#tb.bad{border-color:#e5484d!important;animation:shk .3s}
+@keyframes shk{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 </style>
 </head>
 <body>
@@ -231,6 +239,7 @@ body.hasbar #fab{bottom:88px}
 </div>
 <div id="det" hidden><div id="dbox"></div></div>
 <button id="up" hidden aria-label="Yuxarı">↑</button>
+<div id="toast" role="status" aria-live="polite"></div>
 <div id="fab"><button id="ost" hidden></button><button id="wcall" hidden>Ofisiantı çağır</button></div>
 <div id="bar" hidden><button class="btn" id="open"></button></div>
 <div id="sheet" hidden><div id="box"></div></div>
@@ -264,25 +273,39 @@ async function pollOrd(){
   }catch(e){}
 }
 setInterval(pollOrd,7000);
+/* bildiriş */
+let TT;
+function toast(msg,kind){
+  const t=$('toast');if(!t)return;
+  t.textContent=msg;t.className=kind==='err'?'err':'';
+  void t.offsetWidth;t.classList.add('on');
+  clearTimeout(TT);TT=setTimeout(()=>t.classList.remove('on'),3600);
+}
 /* ofisiant çağırışı */
 let WC=0;
+function askWaiter(){
+  if(Date.now()-WC<60000)return toast('Ofisiant artıq çağırılıb, tezliklə gələcək');
+  $('box').innerHTML=`<h2>Ofisiant çağırılsın?</h2><p class="note">Masa ${esc(table)}</p><button class="btn" data-wgo>Bəli, çağır</button><button class="link" data-close2>Ləğv et</button>`;
+  $('sheet').hidden=false;lock();
+}
 async function callWaiter(){
   if(Date.now()-WC<60000)return;
-  if(!confirm('Ofisiant çağırılsın?'))return;
   const b=$('wcall');b.disabled=true;b.textContent='Göndərilir...';
   let ok=false;
   try{
     const r=await fetch(SB_URL+'/functions/v1/notify-order',{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({call:true,restaurant_id:R.id,table_label:String(table)})});
     const j=await r.json();ok=!!(j&&j.sent);
   }catch(e){}
-  if(!ok){b.disabled=false;b.textContent='Ofisiantı çağır';alert('Çağırış göndərilmədi. Ofisiantı səslə çağır.');return}
-  WC=Date.now();b.textContent='Ofisiant çağırıldı';
+  if(!ok){b.disabled=false;b.textContent='Ofisiantı çağır';toast('Çağırış göndərilmədi. Ofisiantı səslə çağır.','err');return}
+  WC=Date.now();b.textContent='Ofisiant çağırıldı';toast('Ofisiant çağırıldı, tezliklə gələcək');
   setTimeout(()=>{b.disabled=false;b.textContent='Ofisiantı çağır'},60000);
 }
+document.addEventListener('input',e=>{if(e.target.id==='tb'){e.target.classList.remove('bad');const x=$('tbe');if(x)x.hidden=true}});
 document.addEventListener('click',e=>{
   const t=e.target;
   if(t.closest('#ost')){statusScreen();return}
-  if(t.closest('#wcall')){callWaiter();return}
+  if(t.closest('#wcall')){askWaiter();return}
+  if(t.closest('[data-wgo]')){$('sheet').hidden=true;lock();callWaiter();return}
   if(t.closest('[data-ordend]')){ORD=null;saveOrd();$('sheet').hidden=true;lock();paintFab()}
 });
 const q=new URLSearchParams(location.search);
@@ -427,16 +450,16 @@ function openSheet(){
   const {n,t}=totals();if(!n){$('sheet').hidden=true;lock();return}
   const lines=ITEMS.filter(x=>cart[x.id]).map(x=>`<div class="line"><span>${esc(x.name)}<br><small class="muted">${money(x.price)} ${esc(R.currency)}</small></span><span class="qty" data-q="${x.id}"></span></div>`).join('');
   $('box').innerHTML=`<h2>Sifariş${table?', masa '+esc(table):''}</h2>${lines}<div class="line"><b>Cəmi</b><b>${money(t)} ${esc(R.currency)}</b></div>
-  ${table?'':'<input id="tb" inputmode="numeric" placeholder="Masa nömrəsi" autocomplete="off">'}<textarea id="note" rows="2" placeholder="Qeyd (məsələn: soussuz)"></textarea><button class="btn" id="send">Sifarişi göndər</button><button class="link" data-close2>Geri qayıt</button>`;
+  ${table?'':'<input id="tb" inputmode="numeric" placeholder="Masa nömrəsi" autocomplete="off"><div class="ferr" id="tbe" hidden>Masa nömrəsini yaz. Stolun üzərində yazılıb.</div>'}<textarea id="note" rows="2" placeholder="Qeyd (məsələn: soussuz)"></textarea><button class="btn" id="send">Sifarişi göndər</button><button class="link" data-close2>Geri qayıt</button>`;
   $('sheet').hidden=false;lock();repaint();
 }
 async function send(){
   const tl=table||($('tb')?$('tb').value.trim():'');
-  if(!tl){$('tb').focus();return alert('Masa nömrəsini yaz');}
+  if(!tl){const i=$('tb'),e=$('tbe');if(e)e.hidden=false;if(i){i.classList.remove('bad');void i.offsetWidth;i.classList.add('bad');i.focus()}return}
   const btn=$('send');btn.disabled=true;btn.textContent='Göndərilir...';
   const {t}=totals(),id=crypto.randomUUID();
   const o=await api('orders',{m:'POST',h:MIN,b:{id,restaurant_id:R.id,table_label:tl,note:$('note').value.trim()||null,total:Math.round(t*100)/100}});
-  if(!o.ok){btn.disabled=false;btn.textContent='Sifarişi göndər';alert('Sifariş göndərilmədi. Bir az sonra yenidən yoxla.');return}
+  if(!o.ok){btn.disabled=false;btn.textContent='Sifarişi göndər';toast('Sifariş göndərilmədi. Bir az sonra yenidən yoxla.','err');return}
   await api('order_items',{m:'POST',h:MIN,b:ITEMS.filter(x=>cart[x.id]).map(x=>({order_id:id,item_id:x.id,name:x.name,price:x.price,qty:cart[x.id]}))});
   api('events',{m:'POST',h:MIN,b:{restaurant_id:R.id,type:'order'}});
   /* mətbəxə Telegram bildirişi (cavabı gözləmirik, xəta olsa sifariş təsirlənmir) */
