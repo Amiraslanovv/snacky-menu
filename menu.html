@@ -386,6 +386,8 @@ async function send(){
   if(!o.ok){btn.disabled=false;btn.textContent='Sifarişi göndər';alert('Sifariş göndərilmədi. Bir az sonra yenidən yoxla.');return}
   await api('order_items',{m:'POST',h:MIN,b:ITEMS.filter(x=>cart[x.id]).map(x=>({order_id:id,item_id:x.id,name:x.name,price:x.price,qty:cart[x.id]}))});
   api('events',{m:'POST',h:MIN,b:{restaurant_id:R.id,type:'order'}});
+  /* mətbəxə Telegram bildirişi (cavabı gözləmirik, xəta olsa sifariş təsirlənmir) */
+  try{fetch(SB_URL+'/functions/v1/notify-order',{method:'POST',keepalive:true,headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({order_id:id})}).catch(()=>{})}catch(e){}
   for(const k in cart)delete cart[k];repaint();paintBar();
   $('box').innerHTML=`<h2>Sifariş göndərildi</h2><p class="note">Masa ${esc(tl)} üçün sifarişin mətbəxə çatdı. Təşəkkür edirik!</p><button class="btn" data-close2>Bağla</button>`;
 }
