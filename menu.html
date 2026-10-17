@@ -226,6 +226,11 @@ body.hasbar #fab{bottom:88px}
 .ferr[hidden]{display:none}
 #tb.bad{border-color:#e5484d!important;animation:shk .3s}
 @keyframes shk{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.alg{margin:12px 0 4px}
+.alg>small{display:block;color:var(--muted);margin-bottom:2px}
+.alg .chips{margin:6px 0}
+.chips span.al{border-color:var(--kraft);color:var(--gold);background:rgba(233,180,95,.1);font-weight:600}
+.alnote{margin:2px 0 0;color:var(--muted);font-size:12.5px;line-height:1.4}
 </style>
 </head>
 <body>
@@ -436,6 +441,7 @@ function openDet(id){
   <div class="tcard"><h2>${esc(x.name)}</h2>${priceBig(x)}</div>
   ${(x.explode_url||ing.length)?`<button class="tg" type="button" data-ing><span class="ti"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/></svg></span><span class="tl"><small>Tərkib</small><b class="tt">Tərkibi aç</b></span><span class="tch"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></span></button>${x.explode_url?'':'<div id="stk" hidden></div>'}`:''}
   ${x.description?`<p class="desc">${esc(x.description)}</p>`:''}
+  ${(x.allergens&&x.allergens.length)?`<div class="alg"><small>Allergenlər</small><div class="chips">${x.allergens.map(a=>`<span class="al">${esc(a)}</span>`).join('')}</div><p class="alnote">Ciddi allergiyan varsa, sifariş verməzdən əvvəl ofisiantla dəqiqləşdir.</p></div>`:''}
   <div class="meta"><div class="chips">${x.weight?`<span>${esc(x.weight)}</span>`:''}${x.calories?`<span>${x.calories} kkal</span>`:''}${disc(x)?`<span class="sv">Qənaət ${money(disc(x).sv)} ${esc(R.currency)} (−${disc(x).pct}%)</span>`:''}${(x.badges||[]).map(bdg).join('')}</div><button class="fbb" type="button" data-fb>Rəy bildir</button></div>
   <div id="fbf" hidden><select id="fk">${FB.map(f=>`<option>${f}</option>`).join('')}</select><textarea id="fm" rows="2" placeholder="Nə baş verdi? (istəyə bağlı)"></textarea><button class="btn" data-sendfb>Göndər</button></div>
   ${qtyDiv(x.id,'big')}</div>`;
