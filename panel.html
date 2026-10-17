@@ -333,7 +333,7 @@ orders:d=>{
   const oc=o=>`<div class="oc ${o.status}"><div class="row"><span class="tb">Masa ${esc(o.table_label||'-')}</span><small>${new Date(o.created_at).toLocaleTimeString('az',{hour:'2-digit',minute:'2-digit'})}</small></div>
    ${o.order_items.map(i=>`<div class="it">${i.qty} x ${esc(i.name)}</div>`).join('')}${o.note?`<div class="muted">Qeyd: ${esc(o.note)}</div>`:''}
    <div class="row" style="margin-top:8px"><b>${money(o.total)} ${esc(S.rest.currency)}</b></div>
-   <div class="btns">${o.status==='new'?`<button class="p" data-act="st" data-id="${o.id}" data-v="preparing">Qəbul et</button><button class="d" data-act="st" data-id="${o.id}" data-v="cancelled">Ləğv</button>`:''}${o.status==='preparing'?`<button class="p" data-act="st" data-id="${o.id}" data-v="done">Hazırdır</button>`:''}</div></div>`;
+   <div class="btns">${o.status==='new'?`<button class="p" data-act="st" data-id="${o.id}" data-v="preparing">Qəbul et</button><button class="d" data-act="st" data-id="${o.id}" data-v="cancelled">Ləğv</button><button class="d" data-act="blk" data-t="${esc(o.table_label||'')}">Masanı blokla</button>`:''}${o.status==='preparing'?`<button class="p" data-act="st" data-id="${o.id}" data-v="done">Hazırdır</button>`:''}</div></div>`;
   const col=(st,t,n)=>{const l=d.filter(o=>o.status===st).slice(0,n||99);return `<div class="col"><h3>${t}<span class="bd">${l.length}</span></h3>${l.map(oc).join('')||'<p class="muted">Boşdur</p>'}</div>`};
   const none=!d.some(o=>['new','preparing','done'].includes(o.status));
   return checklist()+(none?'<div class="card"><b>Hələ sifariş yoxdur.</b><p class="muted" style="margin:4px 0 0">Müştəri sifariş verəndə burada görünəcək və səs çalacaq.</p></div>':'')+`<div class="cols">${col('new','Yeni')}${col('preparing','Hazırlanır')}${col('done','Hazırdır',8)}</div>`;
@@ -390,20 +390,26 @@ qr:()=>`<div class="card noprint"><div class="row"><label style="margin:0">Masa 
  <label style="margin:0">Üslub <select id="qst" style="width:auto"><option value="light" ${S.qst==='light'?'selected':''}>Açıq (çapa qənaət)</option><option value="dark" ${S.qst==='dark'?'selected':''}>Tünd (restoranın fonu)</option></select></label>
  <label style="margin:0">Çap formatı <select id="qf" style="width:auto"><option value="a4" ${S.qf==='a4'?'selected':''}>A4-də 4 kart</option><option value="a6" ${S.qf==='a6'?'selected':''}>Hər kart ayrı (A6)</option></select></label>
  <span><button data-act="qrgo">Yarat</button> <button class="p" data-act="print">Çap et</button></span></div>
+ <p class="tip">Hər masanın QR-ında gizli açar var, sifariş yalnız QR oxudulanda 2 saatlıq sessiya ilə mümkündür. Açar sızıbsa: <button class="d" data-act="rotk">Açarları yenilə</button> (bütün köhnə QR-lar işləməz, yenidən çap etmək lazım olacaq).</p>
  <p class="tip">Çap pəncərəsində "Kənarlar" (Margins) üçün "Yoxdur" və "Fon qrafikası" (Background graphics) üçün işarəni seç. Kartları mat kağıza çap et və kəs, ya da mat laminasiya et (parlaq səthdə QR işıq əks edib oxunmaya bilər).</p></div><div id="qrs" class="tcs"></div>`,
 rests:()=>`<div class="card"><h2>Yeni restoran</h2><div class="g2"><label>Link adı (məs: burger-house)<input id="ns"></label><label>Restoran adı<input id="nn"></label></div><div class="mf"><span></span><button class="p" data-act="addrest">Əlavə et</button></div></div>
  ${S.rests.map(r=>`<div class="card row"><div><b>${esc(r.name)}</b><br><small>/${esc(r.slug)}</small></div><span><button data-act="pickr" data-id="${r.id}">İdarə et</button> <button data-act="toggle" data-id="${r.id}">${r.active?'Söndür':'Aktiv et'}</button> <button class="d" data-act="delrest" data-id="${r.id}">Sil</button></span></div>`).join('')}
  ${S.rest?`<div class="card"><h2>Sahibkarı dəvət et</h2><p class="muted" style="margin:0">Seçilmiş restoran: <b>${esc(S.rest.name)}</b>. E-poçtu yaz, sahibkara şifrə təyin etmək üçün dəvət məktubu gedir.</p><label>E-poçt<input id="inv" type="email" placeholder="sahibkar@gmail.com"></label><div class="mf"><span></span><button class="p" data-act="invite">Dəvət göndər</button></div><details><summary>Əl ilə bağlamaq (SQL)</summary><code>insert into profiles (id, role, restaurant_id) select id, 'owner', '${S.rest.id}' from auth.users where email = 'EMAIL';</code></details></div>`:''}`
 };
-function qrgo(read=true){
+async function qrgo(read=true){
   if(read){S.nt=Math.max(0,Math.min(200,+$('#nt').value||0));S.qst=$('#qst').value;S.qf=$('#qf').value}
+  if(S.nt>0&&(!S.keys||S.keys.rid!==S.rest.id||S.keys.n<S.nt)){
+    const n=Math.max(S.nt,50),kr=await db.rpc('table_keys',{p_rid:S.rest.id,p_n:n});
+    if(kr.error)return toast('Masa açarları alınmadı. Əvvəl sessions.sql işlədilməlidir.',1);
+    S.keys={rid:S.rest.id,n,m:Object.fromEntries((kr.data||[]).map(x=>[x.t,x.k]))};
+  }
   const base=location.origin+'/'+S.rest.slug,t=S.rest.theme||{},fl=/^#[0-9a-f]{3,8}$/i.test(t.flame||'')?t.flame:'#f2661f',bg=/^#[0-9a-f]{3,8}$/i.test(t.bg||'')?t.bg:'#15161c',dk=S.qst==='dark';
   $('#pgs').textContent=S.qf==='a4'
    ?'@page{size:A4;margin:0}@media print{.tcs{display:grid!important;grid-template-columns:repeat(2,105mm);gap:0;justify-content:center}.tc{border:.2mm dashed #888;border-radius:0;break-inside:avoid;page-break-inside:avoid}}'
    :'@page{size:A6;margin:0}@media print{.tcs{display:block!important}.tc{page-break-after:always;border:0;border-radius:0}}';
   const head=t.logo_url?`<img src="${esc(t.logo_url)}" alt="">`:`<div class="tcn" style="color:${fl}">${esc(S.rest.name)}</div>`;
   $('#qrs').innerHTML=Array.from({length:S.nt+1},(_,n)=>`<div class="tc${dk?' dk':''}" style="--f:${fl};--b:${bg}"><div class="tch">${head}</div><div class="tct"><b>Menyunu skan et</b><span>Telefonun kamerasını QR koda tut, menyuya bax${S.rest.orders_enabled&&n?' və sifariş ver':''}</span></div><div class="tcq" id="q${n}"></div><div class="tcb">${n?'Masa '+n:'Menyu'}</div><div class="tcf">menyum.me/${esc(S.rest.slug)}</div></div>`).join('');
-  for(let n=0;n<=S.nt;n++)new QRCode($('#q'+n),{text:n?base+'?t='+n:base,width:480,height:480,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+  for(let n=0;n<=S.nt;n++)new QRCode($('#q'+n),{text:n?base+'?t='+n+'&k='+S.keys.m[n]:base,width:480,height:480,colorDark:'#000000',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
 }
 
 /* ---------- məhsul redaktə pəncərəsi ---------- */
@@ -484,6 +490,8 @@ document.addEventListener('click',async e=>{
     if(S.p.role==='admin'){o.theme_key=v('tk').trim()||'default';o.name=v('nm').trim()||S.rest.name}
     if(chk(await db.from('restaurants').update(o).eq('id',rid))){Object.assign(S.rest,o);topbar();toast('Saxlanıldı')}return}
   if(a==='qrgo')return qrgo();
+  if(a==='rotk'){if(!confirm('Bütün masa QR-ları köhnələcək və yenidən çap etmək lazım olacaq. Davam edək?'))return;const r=await db.rpc('rotate_table_keys',{p_rid:S.rest.id});if(r.error)return toast('Açarlar yenilənmədi',1);S.keys=null;toast('Açarlar yeniləndi, yeni QR-ları çap et');return qrgo(false)}
+  if(a==='blk'){if(!confirm('Masa '+b.dataset.t+' 60 dəqiqəlik bloklansın? Müştəri bu müddətdə sifariş verə bilməyəcək.'))return;const r=await db.rpc('block_table',{p_rid:S.rest.id,p_t:b.dataset.t,p_min:60});if(r.error)return toast('Masa bloklanmadı',1);toast('Masa '+b.dataset.t+' 60 dəqiqə bloklandı');return}
   if(a==='print')return window.print();
   if(a==='addrest'){
     const slug=$('#ns').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'-'),name=$('#nn').value.trim();
