@@ -79,7 +79,8 @@ h2{margin:0 0 6px;font-size:18px}
 @keyframes sh{to{background-position:-200% 0}}
 .fbi{padding:12px 0;border-top:1px solid var(--line)}
 .qr{display:inline-block;text-align:center;padding:10px;margin:6px;background:#fff;color:#000;border-radius:10px}
-.lk{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+.lk{display:grid;grid-template-columns:1fr 390px;gap:16px;align-items:start}
+#pvf{display:block;width:100%;max-width:390px;height:min(780px,calc(100vh - 110px));border:1px solid var(--line);border-radius:18px;margin:8px auto;background:#000}
 .pvw{position:sticky;top:20px}
 #pvw{border:1px solid var(--line);border-radius:18px;padding:16px;margin:8px 0;min-height:260px;transition:background .2s}
 .pvh{text-align:center;margin-bottom:10px}.pvh img{max-width:90%;object-fit:contain}
@@ -241,7 +242,7 @@ function paint(){
   const v=$('#view');if(!v)return;
   v.innerHTML=S.rest||S.tab==='rests'?(V[S.tab]?V[S.tab](S.C[key(S.tab)]):''):'<p class="muted">Restoran yoxdur. "Restoranlar" bölməsindən əlavə et.</p>';
   if(S.tab==='qr')qrgo(false);
-  if(S.tab==='look'){pvUpdate();checkFonts()}
+  if(S.tab==='look'){const pf=$('#pvf');if(pf)pf.addEventListener('load',pvUpdate);pvUpdate();checkFonts()}
 }
 function beep(){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.setValueAtTime(.2,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.6);o.start();o.stop(a.currentTime+.6)}catch(e){}}
 
@@ -303,14 +304,17 @@ const FP={},FOK={};
 function loadFont(n){if(!n)return Promise.resolve();if(FP[n])return FP[n];return FP[n]=new Promise(r=>{const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(n).replace(/%20/g,'+')+'&display=swap';l.onload=l.onerror=()=>r();document.head.appendChild(l)})}
 async function fontOK(n){if(!n)return true;if(FONTS.includes(n))return true;if(BADF.includes(n))return false;if(n in FOK)return FOK[n];try{await loadFont(n);await document.fonts.load('700 40px "'+n+'"','Əə');const c=document.createElement('canvas').getContext('2d'),m=f=>{c.font='700 40px "'+n+'",'+f;return c.measureText('Əə').width},w=[m('monospace'),m('serif'),m('sans-serif')];return FOK[n]=Math.max(...w)-Math.min(...w)<.5}catch(e){return FOK[n]=true}}
 async function checkFonts(){const sel=$('#f_font');if(!sel)return;for(const o of [...sel.options]){const n=o.value||'Playfair Display';if(!(await fontOK(n))){o.disabled=true;o.textContent=n+' (Azərbaycan hərfləri yoxdur)';if(sel.value===o.value){sel.value='';pvUpdate()}}}}
+function lookTheme(){
+  const v=k=>($('#f_'+k)?.value||'').trim();
+  return {...(S.rest.theme||{}),flame:v('flame'),gold:v('gold'),bg:v('bg'),kraft:v('kraft')||undefined,font:v('font')||undefined,logo_url:v('logo')||undefined,logo_size:(+v('lsize')&&+v('lsize')!==100)?+v('lsize'):undefined,bg_image:v('bgimg')||undefined,favicon_url:v('fav')||undefined,cover_url:v('cover')||undefined};
+}
 function pvUpdate(){
-  const g=k=>$('#f_'+k)?.value||'',el=$('#pvw');if(!el)return;
-  const fl=g('flame'),gd=g('gold'),bg=g('bg'),fo=g('font')||'Playfair Display',ls=+g('lsize')||100,logo=g('logo');
-  if($('#lsv'))$('#lsv').textContent=ls;
-  loadFont(fo);
-  const m=S.C[key('menu')],it=m?.items.find(i=>i.image_url)||m?.items[0];
-  el.style.background=bg;el.style.fontFamily="'"+fo+"',Georgia,serif";
-  el.innerHTML=`<div class="pvh">${logo?`<img src="${esc(logo)}" style="height:${Math.round(ls*.6)}px" alt="">`:`<span style="color:${fl};font-size:36px;font-weight:700">${esc(S.rest.name)}</span>`}</div><div class="pvs" style="color:${gd}">Əsas yeməklər</div><div class="pvc"><div class="pvi" ${it?.image_url?`style="background-image:url('${esc(it.image_url)}')"`:''}></div><div class="pvr"><b style="font-family:system-ui">${esc(it?.name||'Nümunə yemək')}</b><span class="pvp" style="border-color:${gd};color:${gd}">${it?money(it.price):'6.50'}</span></div><span class="pva" style="background:${fl}">+</span></div>`;
+  const f=$('#pvf');if(!f||!f.contentWindow)return;
+  clearTimeout(pvUpdate.t);
+  pvUpdate.t=setTimeout(()=>{
+    const tk=($('#f_tk')?.value||'').trim()||S.rest.theme_key||'default',oe=$('#f_oe');
+    f.contentWindow.postMessage({type:'menyum-theme',theme:JSON.parse(JSON.stringify(lookTheme())),theme_key:tk,orders_enabled:oe?oe.checked:!!S.rest.orders_enabled},location.origin);
+  },120);
 }
 function report(d){
   const R=d.R,c=S.rest.currency,dt=new Date().toLocaleDateString('en-GB').replace(/\//g,'.'),mx=Math.max(...d.hours),pk=d.hours.indexOf(mx);
@@ -367,7 +371,7 @@ look:()=>{
   ${a?`<div class="card"><h2>Admin ayarları</h2><div class="g2"><label>Restoran adı<input id="f_nm" value="${esc(S.rest.name)}"></label><label>Dizayn açarı (theme_key)<input id="f_tk" value="${esc(S.rest.theme_key)}"></label></div>
   <label class="chk"><span class="sw"><input type="checkbox" id="f_lst" ${t.unlisted?'':'checked'}><span></span></span> menyum.me ana səhifəsində göstər</label></div>`:''}
   <div class="mf"><span></span><button class="p" data-act="savelook">Dəyişiklikləri saxla</button></div></div>
-  <div class="pvw"><b class="muted">Canlı baxış</b><div id="pvw"></div><small class="muted">Təxmini görünüşdür. Saxlayandan sonra "Menyuya bax" ilə həqiqisini yoxla.</small></div></div>`;
+  <div class="pvw"><b class="muted">Canlı baxış</b><iframe id="pvf" title="Menyunun canlı baxışı" src="/${esc(S.rest.slug)}?pv=1"></iframe><small class="muted">Bu, menyunun özüdür. Dəyişikliklər dərhal görünür, amma "Saxla" basmayana qədər müştəriyə görünmür.</small></div></div>`;
 },
 stats:d=>{
   if(!d)return skel();
