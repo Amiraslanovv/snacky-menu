@@ -240,6 +240,11 @@ body.hasbar #fab{bottom:88px}
 .favb.on{border-color:var(--flame);color:var(--flame)}
 #qrnote{margin:10px 0 0;padding:12px 16px;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;background:var(--card);color:var(--ink);font:500 14.5px/1.4 var(--body)}
 #qrnote[hidden]{display:none}
+/* Snacky lampalı logo */
+.mq{display:block;width:min(92vw,520px);height:auto;margin:0 auto;overflow:visible}
+body[data-theme="snacky"] .logo.mqlogo{background:none!important;-webkit-background-clip:border-box!important;background-clip:border-box!important;color:inherit!important;filter:none!important;animation:none!important;padding:0!important;font-size:0!important;line-height:0!important}
+.mqlogo .bulbs{animation:flick 6s infinite}
+@media (prefers-reduced-motion:reduce){.mqlogo .bulbs{animation:none}}
 </style>
 </head>
 <body>
@@ -343,6 +348,7 @@ const q=new URLSearchParams(location.search);
 const seg=location.pathname.split('/').filter(Boolean)[0];
 const slug=(seg&&seg!=='menu.html'?seg:null)||q.get('r');
 let table=null,SESS=null;
+const PV=q.get('pv')==='1'; /* panelin canlı baxışı: sifariş və statistika söndürülür */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const money=n=>(Math.round(n*100)/100).toFixed(2);
@@ -404,7 +410,7 @@ function dropSession(){
   try{$('sheet').hidden=true;lock()}catch(e){}
   if(R){render();repaint();paintBar()}
 }
-function paintNote(){const n=$('qrnote');if(n)n.hidden=!(R&&R.orders_enabled&&!SESS)}
+function paintNote(){const n=$('qrnote');if(n)n.hidden=PV||!(R&&R.orders_enabled&&!SESS)}
 setInterval(()=>{if(SESS&&SESS.exp*1000<Date.now()){dropSession();toast('Sessiya bitdi. Sifariş üçün masadakı QR kodu yenidən oxut.','err')}},20000);
 async function init(){
   if(!slug) return fail('Restoran tapılmadı.');
@@ -418,32 +424,67 @@ async function init(){
     if(!d){ if(!cached) fail('Bu menyu tapılmadı.'); return }
     const str=JSON.stringify(d);
     if(!cached||JSON.stringify(cached)!==str){show(d);try{localStorage.setItem('m_'+slug,str)}catch(e){}}
-    try{if(!sessionStorage.getItem('sc_'+d.id)){sessionStorage.setItem('sc_'+d.id,1);api('events',{m:'POST',b:{restaurant_id:d.id,type:'scan'},h:MIN})}}catch(e){}
+    try{if(!PV&&!sessionStorage.getItem('sc_'+d.id)){sessionStorage.setItem('sc_'+d.id,1);api('events',{m:'POST',b:{restaurant_id:d.id,type:'scan'},h:MIN})}}catch(e){}
   }catch(e){ if(!cached) fail('Bağlantı xətası. Yenidən yoxla.') }
 }
 function show(d){
   R=d;loadFav();canOrder=!!d.orders_enabled&&!!SESS;ITEMS=d.items||[];CATS=d.categories||[];
   applyTheme(d);render();repaint();paintBar();hideSplash();
+  if(PV&&PVMSG)applyPv(PVMSG);
   if(show.t!==d.id){show.t=d.id;api('rpc/top_items',{m:'POST',b:{rid:d.id,n:3}}).then(r=>r.json()).then(a=>{if(Array.isArray(a)){TOP=a.map(x=>x.item_id);render();repaint();paintBar()}}).catch(()=>{})}
 }
 const GOODF=['Playfair Display','Lobster','Pacifico','Alfa Slab One','Oswald','Anton','Montserrat','Poppins','Raleway','Lora','Merriweather','Bitter','Caveat','Cormorant Garamond','Josefin Sans','Exo 2','Roboto Slab','Nunito','Noto Serif Display'],BADF=['Almendra','Rubik','Outfit','Fredoka','Marcellus','Archivo Black','Bebas Neue','Bree Serif','Abril Fatface','PT Sans','PT Serif','Russo One','Ubuntu','Manrope'];
 async function fontOK(n){if(GOODF.includes(n))return true;if(BADF.includes(n))return false;try{await document.fonts.load('700 40px "'+n+'"','Əə');const c=document.createElement('canvas').getContext('2d'),m=f=>{c.font='700 40px "'+n+'",'+f;return c.measureText('Əə').width},w=[m('monospace'),m('serif'),m('sans-serif')];return Math.max(...w)-Math.min(...w)<.5}catch(e){return true}}
 const stdIcon=c=>'data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${c}"/><g fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v14M24 13v14M30 13v14"/><path d="M18 27q0 8 6 8t6-8"/><path d="M24 35v17"/><path d="M42 33v19"/></g><path d="M42 12c7 2 9 10 7 21H42z" fill="#fff"/></svg>`);
 /* Sahibkarın tənzimləmələri: restaurants.theme (jsonb) */
+/* logo: Snacky üçün lampalı işıqlı lövhə (SVG), logo yüklənibsə şəkil */
+let MQT=0,MQP=null;
+function mqFont(){if(MQP)return MQP;return MQP=new Promise(res=>{const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap';l.onload=l.onerror=()=>res();document.head.appendChild(l);setTimeout(res,3000)})}
+async function mqLogo(name,tok){
+  const b=$('brand');
+  try{
+    const txt=name.toLocaleUpperCase('az'),FS=120,SP=8,pad=34,capH=Math.round(FS*.7);
+    await mqFont();
+    try{await document.fonts.load('900 '+FS+'px Montserrat',txt)}catch(e){}
+    if(tok!==MQT)return;
+    const c=document.createElement('canvas').getContext('2d');c.font='900 '+FS+'px Montserrat,sans-serif';
+    const W=Math.ceil(c.measureText(txt).width+SP*(txt.length-1)+pad*2),H=capH+pad*2;
+    const t=a=>`<text x="${W/2+SP/2}" y="${pad+capH}" text-anchor="middle" style="font:900 ${FS}px Montserrat,sans-serif;letter-spacing:${SP}px" ${a}>${esc(txt)}</text>`;
+    const D='fill="none" stroke-dasharray="0.01 21" stroke-linecap="round"';
+    b.innerHTML=`<svg class="mq" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(name)}"><defs><filter id="mqg" x="-10%" y="-40%" width="120%" height="180%"><feGaussianBlur stdDeviation="5"/></filter></defs>`
+      +t('fill="#241206" stroke="#241206" stroke-width="24" stroke-linejoin="round"')
+      +t('fill="#4a2810" stroke="#6b3a17" stroke-width="3" stroke-linejoin="round"')
+      +`<g class="bulbs"><g filter="url(#mqg)" opacity=".85">${t(D+' stroke="#ff8a1f" stroke-width="16"')}</g>${t(D+' stroke="#ffc15e" stroke-width="9"')}${t(D+' stroke="#fff3cf" stroke-width="4"')}</g></svg>`;
+    b.classList.add('mqlogo');b.style.minHeight='';
+  }catch(e){if(tok===MQT){b.innerHTML=esc(name);b.style.minHeight=''}}
+}
 function applyTheme(r){
   document.title=r.name+' Menyu';document.body.dataset.theme=r.theme_key;
-  const th=r.theme||{};
-  for(const k of ['flame','flame2','gold','bg','card','ink','muted','kraft']) if(th[k]) document.documentElement.style.setProperty('--'+k,th[k]);
-  if(th.logo_size)document.documentElement.style.setProperty('--logo-h',th.logo_size+'px');
-  if(th.flame&&!th.flame2&&th.flame.toLowerCase()!=='#f2661f')document.documentElement.style.setProperty('--flame2','color-mix(in srgb,'+th.flame+' 68%,#fff)');
-  if(th.font&&!document.getElementById('thf')){const l=document.createElement('link');l.id='thf';l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(th.font).replace(/%20/g,'+')+'&display=swap';l.onload=()=>fontOK(th.font).then(ok=>{if(ok)document.documentElement.style.setProperty('--display',`'${th.font}',Georgia,serif`)});document.head.appendChild(l)}
-  if(th.bg_image)document.documentElement.style.setProperty('--bgimg','url("'+th.bg_image.replace(/["\\()]/g,'')+'")');
+  const th=r.theme||{},rs=document.documentElement.style;
+  for(const k of ['flame','flame2','gold','bg','card','ink','muted','kraft','logo-h','bgimg','display']) rs.removeProperty('--'+k);
+  for(const k of ['flame','flame2','gold','bg','card','ink','muted','kraft']) if(th[k]) rs.setProperty('--'+k,th[k]);
+  if(th.logo_size)rs.setProperty('--logo-h',th.logo_size+'px');
+  if(th.flame&&!th.flame2&&th.flame.toLowerCase()!=='#f2661f')rs.setProperty('--flame2','color-mix(in srgb,'+th.flame+' 68%,#fff)');
+  const ol=document.getElementById('thf');if(ol&&ol.dataset.f!==(th.font||''))ol.remove();
+  if(th.font&&!document.getElementById('thf')){const l=document.createElement('link');l.id='thf';l.dataset.f=th.font;l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(th.font).replace(/%20/g,'+')+'&display=swap';document.head.appendChild(l)}
+  if(th.font)fontOK(th.font).then(ok=>{if(ok)rs.setProperty('--display',`'${th.font}',Georgia,serif`)});
+  if(th.bg_image)rs.setProperty('--bgimg','url("'+th.bg_image.replace(/["\\()]/g,'')+'")');
   $('fav').href=th.favicon_url||stdIcon(th.flame||'#f2661f');
-  if(th.cover_url){$('cover').hidden=false;$('coverimg').src=th.cover_url;document.body.classList.add('hascover')}
-  $('brand').classList.toggle('imglogo',!!th.logo_url);
-  $('brand').innerHTML=th.logo_url?`<img src="${esc(th.logo_url)}" alt="${esc(r.name)}">`:esc(r.name);
+  $('cover').hidden=!th.cover_url;document.body.classList.toggle('hascover',!!th.cover_url);if(th.cover_url)$('coverimg').src=th.cover_url;
+  const br=$('brand'),tok=++MQT;br.classList.toggle('imglogo',!!th.logo_url);br.classList.remove('mqlogo');br.style.minHeight='';
+  if(th.logo_url)br.innerHTML=`<img src="${esc(th.logo_url)}" alt="${esc(r.name)}">`;
+  else if(r.theme_key==='snacky'){br.innerHTML='';br.style.minHeight='96px';mqLogo(r.name,tok)}
+  else br.innerHTML=esc(r.name);
   $('foot').textContent=(table?'Masa '+table:'');
 }
+/* panelin canlı baxışı: panel dəyişiklikləri postMessage ilə göndərir */
+let PVMSG=null;
+function applyPv(m){
+  if(!R||!m||!m.theme)return;
+  R.theme=m.theme;if(m.theme_key)R.theme_key=m.theme_key;R.orders_enabled=!!m.orders_enabled;canOrder=false;
+  applyTheme(R);render();repaint();paintBar();
+}
+addEventListener('message',e=>{if(!PV||e.origin!==location.origin)return;const m=e.data;if(m&&m.type==='menyum-theme'){PVMSG=m;applyPv(m)}});
 const ingOf=s=>{const m=/^(\p{Extended_Pictographic}\S*)\s+(.+)$/u.exec(s);return m?{e:m[1],n:m[2]}:{e:'•',n:s}};
 const art=x=>x.image_url?`<img src="${esc(x.image_url)}" alt="" loading="lazy">`:`<div class="ph"><span>${esc(R?.name||'')}</span></div>`;
 const media=u=>/\.(mp4|webm)(\?|$)/i.test(u)?`<video src="${esc(u)}" muted playsinline preload="auto" disablepictureinpicture></video>`:`<img src="${esc(u)}" alt="">`;
