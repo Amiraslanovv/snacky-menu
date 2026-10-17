@@ -297,15 +297,15 @@ function bdPaint(){
   +(BD.length?`<div style="margin-top:10px"><small>Kartda ilk 2-si, yeməyin detalında hamısı görünür.</small> <button type="button" class="lnk" data-act="bdc">Seçimi təmizlə</button></div>`:'');
 }
 const mini=b=>`<span class="mc" style="background:${BADGE_COL[b]||'#888'}">${esc(b)}</span>`;
-const FONTS=['Almendra','Playfair Display','Pacifico','Rubik','Lobster','Oswald','Montserrat','Poppins'];
-const PRESETS=[['Snacky alovu','#f2661f','#e9b45f','#15161c','#b98a5a',''],['Qara və qızıl','#c9a24a','#e8d28a','#0d0d0d','#8a7237','Playfair Display'],['Meşə yaşılı','#3fa66b','#e6d9a8','#0f1a14','#6b8f5a',''],['Dəniz mavisi','#2f7de1','#bfe0ff','#0c1424','#4d6f9e','Montserrat'],['Şirin çəhrayı','#e8567f','#ffd1dc','#1d1218','#a8566e','Pacifico'],['Qırmızı fast-food','#e31e24','#ffc72c','#17120f','#a8632d','Rubik']];
+const FONTS=['Playfair Display','Lobster','Pacifico','Alfa Slab One','Oswald','Anton','Montserrat','Poppins','Raleway','Lora','Merriweather','Bitter','Caveat','Cormorant Garamond','Josefin Sans','Exo 2','Roboto Slab','Nunito'],BADF=['Almendra','Rubik','Outfit','Fredoka','Marcellus','Archivo Black','Bebas Neue','Bree Serif','Abril Fatface','PT Sans','PT Serif','Russo One','Ubuntu','Manrope'];
+const PRESETS=[['Snacky alovu','#f2661f','#e9b45f','#15161c','#b98a5a',''],['Qara və qızıl','#c9a24a','#e8d28a','#0d0d0d','#8a7237','Playfair Display'],['Meşə yaşılı','#3fa66b','#e6d9a8','#0f1a14','#6b8f5a',''],['Dəniz mavisi','#2f7de1','#bfe0ff','#0c1424','#4d6f9e','Montserrat'],['Şirin çəhrayı','#e8567f','#ffd1dc','#1d1218','#a8566e','Pacifico'],['Qırmızı fast-food','#e31e24','#ffc72c','#17120f','#a8632d','Oswald']];
 const FP={},FOK={};
 function loadFont(n){if(!n)return Promise.resolve();if(FP[n])return FP[n];return FP[n]=new Promise(r=>{const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(n).replace(/%20/g,'+')+'&display=swap';l.onload=l.onerror=()=>r();document.head.appendChild(l)})}
-async function fontOK(n){if(!n)return true;if(n in FOK)return FOK[n];try{await loadFont(n);await document.fonts.load('700 40px "'+n+'"','Əə');const c=document.createElement('canvas').getContext('2d'),m=f=>{c.font='700 40px "'+n+'",'+f;return c.measureText('Əə').width},w=[m('monospace'),m('serif'),m('sans-serif')];return FOK[n]=Math.max(...w)-Math.min(...w)<.5}catch(e){return FOK[n]=true}}
-async function checkFonts(){const sel=$('#f_font');if(!sel)return;for(const o of [...sel.options]){const n=o.value||'Almendra';if(!(await fontOK(n))){o.disabled=true;o.textContent=n+' (Azərbaycan hərfləri yoxdur)';if(sel.value===o.value){sel.value='';pvUpdate()}}}}
+async function fontOK(n){if(!n)return true;if(FONTS.includes(n))return true;if(BADF.includes(n))return false;if(n in FOK)return FOK[n];try{await loadFont(n);await document.fonts.load('700 40px "'+n+'"','Əə');const c=document.createElement('canvas').getContext('2d'),m=f=>{c.font='700 40px "'+n+'",'+f;return c.measureText('Əə').width},w=[m('monospace'),m('serif'),m('sans-serif')];return FOK[n]=Math.max(...w)-Math.min(...w)<.5}catch(e){return FOK[n]=true}}
+async function checkFonts(){const sel=$('#f_font');if(!sel)return;for(const o of [...sel.options]){const n=o.value||'Playfair Display';if(!(await fontOK(n))){o.disabled=true;o.textContent=n+' (Azərbaycan hərfləri yoxdur)';if(sel.value===o.value){sel.value='';pvUpdate()}}}}
 function pvUpdate(){
   const g=k=>$('#f_'+k)?.value||'',el=$('#pvw');if(!el)return;
-  const fl=g('flame'),gd=g('gold'),bg=g('bg'),fo=g('font')||'Almendra',ls=+g('lsize')||100,logo=g('logo');
+  const fl=g('flame'),gd=g('gold'),bg=g('bg'),fo=g('font')||'Playfair Display',ls=+g('lsize')||100,logo=g('logo');
   if($('#lsv'))$('#lsv').textContent=ls;
   loadFont(fo);
   const m=S.C[key('menu')],it=m?.items.find(i=>i.image_url)||m?.items[0];
@@ -349,7 +349,7 @@ menu:d=>{
    +(loose.length?`<div class="card"><h2>Kateqoriyasız</h2>${rows(loose)}</div>`:'')+'<button class="p" data-act="addcat">+ Kateqoriya</button>';
 },
 look:()=>{
-  const t=S.rest.theme||{},a=S.p.role==='admin',cur=t.font||'',fl=FONTS.includes(cur)||!cur?FONTS:[...FONTS,cur];
+  const t=S.rest.theme||{},a=S.p.role==='admin',cur=FONTS.includes(t.font)?t.font:'',fl=FONTS;
   return `<div class="lk" id="lookform"><div>
   <div class="card"><h2>Hazır üslublar</h2><p class="muted" style="margin:0">Birinə toxun, rənglər və şrift dərhal dəyişir. Sonra istədiyin kimi dəqiqləşdir.</p><div class="pss">${PRESETS.map(p=>`<button class="ps" data-act="preset" data-p="${p.join('|')}" style="background:${p[3]};border-color:${p[1]}"><i style="background:${p[1]}"></i><i style="background:${p[2]}"></i>${p[0]}</button>`).join('')}</div></div>
   <div class="card"><h2>Rənglər</h2><div class="g3">
@@ -357,7 +357,7 @@ look:()=>{
    <label>Qiymət və başlıq rəngi<br><input type="color" id="f_gold" value="${t.gold||'#e9b45f'}"><br><small>Qiymət dairəsi, bölmə adları</small></label>
    <label>Arxa fon<br><input type="color" id="f_bg" value="${t.bg||'#15161c'}"><br><small>Səhifənin əsas rəngi</small></label></div>
    <input type="hidden" id="f_kraft" value="${esc(t.kraft||'')}"></div>
-  <div class="card"><h2>Şrift</h2><label>Restoran adı və başlıqlar üçün<select id="f_font"><option value="">Standart (Almendra)</option>${fl.filter(f=>f!=='Almendra').map(f=>`<option ${f===cur?'selected':''}>${esc(f)}</option>`).join('')}</select></label></div>
+  <div class="card"><h2>Şrift</h2><label>Restoran adı və başlıqlar üçün<select id="f_font"><option value="">Standart (Playfair Display)</option>${fl.filter(f=>f!=='Playfair Display').map(f=>`<option ${f===cur?'selected':''}>${esc(f)}</option>`).join('')}</select></label></div>
   <div class="card"><h2>Logo</h2><p class="muted" style="margin:0">Logonun fonu qara və ya ağdırsa, fon avtomatik silinir və kənar boşluqlar kəsilir.</p>${mediaBox('logo','Logo şəkli',t.logo_url)}
    <label>Logo ölçüsü: <b id="lsv">${t.logo_size||100}</b> px<input type="range" id="f_lsize" min="40" max="220" value="${t.logo_size||100}"></label></div>
   <div class="card"><h2>Üz qabığı şəkli</h2><p class="muted" style="margin:0">Menyunun ən yuxarısında göstərilən geniş şəkil (restoranın fasadı və ya interyeri, təxminən 4:1 nisbətində). Yükləsən, yazılı ad yerinə bu şəkil görünür.</p>${mediaBox('cover','Üz qabığı',t.cover_url)}</div>
