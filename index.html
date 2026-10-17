@@ -8,10 +8,10 @@
 <meta name="description" content="Masada QR kod, telefonda menyu, mətbəxdə sifariş. Restoran və kafelər üçün QR menyu və masadan sifariş.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23c63d21%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223.2%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M18%2013v14M24%2013v14M30%2013v14%22%2F%3E%3Cpath%20d%3D%22M18%2027q0%208%206%208t6-8%22%2F%3E%3Cpath%20d%3D%22M24%2035v17%22%2F%3E%3Cpath%20d%3D%22M42%2033v19%22%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%22M42%2012c7%202%209%2010%207%2021H42z%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:ital,wght@0,600;0,800;1,600&family=Outfit:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:ital,wght@0,600;0,800;1,600&family=Outfit:wght@400;500;600&display=swap"></noscript>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:ital,wght@0,600;0,800;1,600&family=Nunito:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:ital,wght@0,600;0,800;1,600&family=Nunito:wght@400;500;600;700&display=swap"></noscript>
 <style>
-:root{--paper:#f3ead8;--card:#fbf5e6;--ink:#201a13;--muted:#6b5f50;--red:#c63d21;--mustard:#f0b429;--serif:'Noto Serif Display','Noto Serif',Georgia,'Times New Roman',serif;--sans:'Outfit',system-ui,sans-serif}
+:root{--paper:#f3ead8;--card:#fbf5e6;--ink:#201a13;--muted:#6b5f50;--red:#c63d21;--mustard:#f0b429;--serif:'Noto Serif Display','Noto Serif',Georgia,'Times New Roman',serif;--sans:'Nunito',system-ui,sans-serif}
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 var(--sans);overflow-x:hidden}
@@ -161,7 +161,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
     await document.fonts.ready;
     await document.fonts.load('800 40px "Noto Serif Display"','Əə');
     const c=document.createElement('canvas').getContext('2d'),m=f=>{c.font='800 40px "Noto Serif Display",'+f;return c.measureText('Əə').width},w=[m('monospace'),m('serif'),m('sans-serif')];
-    if(Math.max(...w)-Math.min(...w)>=.5)document.documentElement.style.setProperty('--serif',"'Outfit',system-ui,sans-serif");
+    if(Math.max(...w)-Math.min(...w)>=.5)document.documentElement.style.setProperty('--serif',"'Nunito',system-ui,sans-serif");
   }catch(e){}
 })();
 
